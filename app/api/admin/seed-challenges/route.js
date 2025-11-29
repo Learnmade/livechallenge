@@ -458,6 +458,17 @@ export async function POST(request) {
     }
 
     console.log(`\n🎉 Successfully created ${totalCreated} challenges in ${summary.duration}`)
+    
+    // Clear cache for challenges to force refresh
+    try {
+      const { cacheManager } = await import('@/lib/cache')
+      // Clear all cache entries to force fresh data
+      cacheManager.clear()
+      console.log('🗑️  Cleared all cache entries')
+    } catch (cacheError) {
+      console.warn('Could not clear cache:', cacheError.message)
+    }
+    
     return NextResponse.json({
       message: `Successfully created ${totalCreated} challenges across ${languages.length} languages!`,
       ...summary,

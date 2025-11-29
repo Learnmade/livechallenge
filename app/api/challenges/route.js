@@ -40,29 +40,59 @@ async function getChallengesHandler(request) {
       .sort({ challengeNumber: 1 })
       .select('-testCases -solution') // Don't send test cases or solution to client
       .lean() // Use lean() for better performance
-
+    
+    console.log(`📊 Found ${challenges.length} challenges for language: ${language}`)
+    
+    // Log first challenge for debugging
+    if (challenges.length > 0) {
+      console.log(`📝 Sample challenge:`, {
+        id: challenges[0]._id?.toString(),
+        title: challenges[0].title,
+        slug: challenges[0].slug,
+        language: challenges[0].language,
+        isActive: challenges[0].isActive,
+        challengeNumber: challenges[0].challengeNumber,
+      })
+    } else {
+      console.warn(`⚠️  No challenges found for language: ${language}`)
+      // Double check with a direct query
+      const directCheck = await Challenge.find({ language }).limit(1).lean()
+      console.log(`🔍 Direct query check: Found ${directCheck.length} challenges (without isActive filter)`)
+    }
+    
     // Get user's submission status for each challenge
     const challengesWithStatus = await Promise.all(
       challenges.map(async (challenge) => {
-        const submission = await ChallengeSubmission.findOne({
-          challengeId: challenge._id,
-          userId: userId,
-          status: 'passed',
-        })
-
-        const challengeObj = challenge.toObject()
-        challengeObj.id = challengeObj._id.toString()
-        delete challengeObj._id
+        // Since we're using .lean(), challenge is already a plain object
+        // Convert _id to id and ensure slug exists
+        const challengeObj = {
+          ...challenge,
+          id: challenge._id ? challenge._id.toString() : challenge.id,
+        }
+        
+        // Remove _id if it exists
+        if (challengeObj._id) {
+          delete challengeObj._id
+        }
         
         // Ensure slug exists (fallback to generated slug if missing)
-        if (!challengeObj.slug) {
+        if (!challengeObj.slug || challengeObj.slug.trim() === '') {
           // Generate slug from title if missing
           const { generateSlug } = await import('@/lib/slug')
           challengeObj.slug = generateSlug(challengeObj.title) || `challenge-${challengeObj.challengeNumber}`
         }
 
+        // Use the challenge _id for queries
+        const challengeId = challenge._id || challenge.id
+
+        const submission = await ChallengeSubmission.findOne({
+          challengeId: challengeId,
+          userId: userId,
+          status: 'passed',
+        })
+
         const hasAttempted = await ChallengeSubmission.exists({ 
-          challengeId: challenge._id, 
+          challengeId: challengeId, 
           userId: userId 
         })
 

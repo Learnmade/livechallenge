@@ -31,19 +31,33 @@ export default function ChallengesPage() {
   const fetchChallenges = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/challenges?language=${selectedLanguage}`, {
+      // Add timestamp to bypass cache after seeding
+      const timestamp = Date.now()
+      const response = await fetch(`/api/challenges?language=${selectedLanguage}&_t=${timestamp}`, {
         credentials: 'include',
+        cache: 'no-store', // Disable browser cache
       })
       if (response.ok) {
         const data = await response.json()
+        console.log(`📊 Fetched ${data.challenges?.length || 0} challenges for ${selectedLanguage}`)
+        console.log(`📝 Challenges data:`, data.challenges?.slice(0, 2)) // Log first 2 challenges
         setChallenges(data.challenges || [])
         setStats(data.stats || {})
+        
+        // If no challenges but we expect them, log warning
+        if ((data.challenges || []).length === 0) {
+          console.warn(`⚠️  No challenges returned for ${selectedLanguage}. Stats:`, data.stats)
+        }
       } else {
-        const errorData = await response.json()
+        const errorData = await response.json().catch(() => ({}))
         console.error('Error fetching challenges:', errorData)
+        setChallenges([])
+        setStats({})
       }
     } catch (error) {
       console.error('Error fetching challenges:', error)
+      setChallenges([])
+      setStats({})
     } finally {
       setLoading(false)
     }
@@ -75,12 +89,34 @@ export default function ChallengesPage() {
 
       const data = await response.json()
 
-      if (response.ok) {
-        toast.success(`Successfully created ${data.totalCreated} challenges!`)
-        // Refresh challenges
-        await fetchChallenges()
+      if (response.ok || response.status === 207) {
+        // 207 Multi-Status means partial success
+        if (data.totalErrors > 0) {
+          toast.success(
+            `Seeding completed with ${data.totalErrors} errors. ${data.totalCreated} challenges created.`,
+            { duration: 5000 }
+          )
+        } else {
+          toast.success(
+            `Successfully created ${data.totalCreated} challenges across ${data.languagesProcessed} languages!`,
+            { duration: 5000 }
+          )
+        }
+        
+        // Clear cache and refresh challenges list
+        // Force a fresh fetch by adding timestamp
+        setTimeout(() => {
+          fetchChallenges()
+        }, 500)
+        
+        // Also refresh after a longer delay to ensure DB is updated
+        setTimeout(() => {
+          fetchChallenges()
+        }, 2000)
       } else {
-        toast.error(data.error || 'Failed to seed challenges')
+        const errorMsg = data.message || data.error || 'Failed to seed challenges'
+        toast.error(errorMsg, { duration: 6000 })
+        console.error('Seeding error:', data)
       }
     } catch (error) {
       console.error('Seed challenges error:', error)
