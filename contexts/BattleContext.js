@@ -11,45 +11,85 @@ export function BattleProvider({ children }) {
   const [socket, setSocket] = useState(null)
 
   useEffect(() => {
-    // Initialize socket connection
+    // Initialize socket connection with error handling
     // In production, this would connect to your WebSocket server
-    const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001', {
-      transports: ['websocket'],
-    })
+    try {
+      const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001'
+      const newSocket = io(socketUrl, {
+        transports: ['websocket'],
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        timeout: 5000,
+      })
 
-    newSocket.on('connect', () => {
-      console.log('Connected to battle server')
-    })
+      newSocket.on('connect', () => {
+        console.log('Connected to battle server')
+      })
 
-    newSocket.on('battle:start', (battle) => {
-      setActiveBattle(battle)
-      setLeaderboard([])
-    })
+      newSocket.on('connect_error', (error) => {
+        console.warn('Socket connection error (non-critical):', error.message)
+        // Don't crash the app if socket fails to connect
+      })
 
-    newSocket.on('battle:end', () => {
-      setActiveBattle(null)
-    })
+      newSocket.on('battle:start', (battle) => {
+        try {
+          setActiveBattle(battle)
+          setLeaderboard([])
+        } catch (error) {
+          console.error('Error handling battle:start:', error)
+        }
+      })
 
-    newSocket.on('battle:update', (data) => {
-      setActiveBattle((prev) => ({
-        ...prev,
-        timeRemaining: data.timeRemaining,
-      }))
-    })
+      newSocket.on('battle:end', () => {
+        try {
+          setActiveBattle(null)
+        } catch (error) {
+          console.error('Error handling battle:end:', error)
+        }
+      })
 
-    newSocket.on('leaderboard:update', (newLeaderboard) => {
-      setLeaderboard(newLeaderboard)
-    })
+      newSocket.on('battle:update', (data) => {
+        try {
+          setActiveBattle((prev) => {
+            if (!prev) return prev
+            return {
+              ...prev,
+              timeRemaining: data.timeRemaining,
+            }
+          })
+        } catch (error) {
+          console.error('Error handling battle:update:', error)
+        }
+      })
 
-    newSocket.on('submission:result', (result) => {
-      // Handle submission result
-      console.log('Submission result:', result)
-    })
+      newSocket.on('leaderboard:update', (newLeaderboard) => {
+        try {
+          setLeaderboard(newLeaderboard || [])
+        } catch (error) {
+          console.error('Error handling leaderboard:update:', error)
+        }
+      })
 
-    setSocket(newSocket)
+      newSocket.on('submission:result', (result) => {
+        try {
+          // Handle submission result
+          console.log('Submission result:', result)
+        } catch (error) {
+          console.error('Error handling submission:result:', error)
+        }
+      })
 
-    return () => {
-      newSocket.close()
+      setSocket(newSocket)
+
+      return () => {
+        if (newSocket) {
+          newSocket.close()
+        }
+      }
+    } catch (error) {
+      console.error('Error initializing socket (non-critical):', error)
+      // App continues to work without socket connection
     }
   }, [])
 

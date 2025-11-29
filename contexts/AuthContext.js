@@ -22,12 +22,17 @@ export function AuthProvider({ children }) {
       
       if (response.ok) {
         const data = await response.json()
-        setUser(data.user)
+        if (data && data.user) {
+          setUser(data.user)
+        } else {
+          setUser(null)
+        }
       } else {
         setUser(null)
       }
     } catch (error) {
       console.error('Auth check error:', error)
+      // Don't crash the app on auth errors
       setUser(null)
     } finally {
       setLoading(false)
