@@ -225,7 +225,12 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
   }
 
   const isDark = theme === 'vs-dark'
-  const editorHeight = isFullscreen ? 'calc(100vh - 100px)' : `calc(${height} - 100px)`
+  // Calculate editor height accounting for title bar and status bar
+  const titleBarHeight = 60 // Approximate title bar height
+  const statusBarHeight = 28 // Approximate status bar height
+  const editorHeight = isFullscreen 
+    ? `calc(100vh - ${titleBarHeight + statusBarHeight}px)` 
+    : `calc(${height} - ${titleBarHeight + statusBarHeight}px)`
 
   if (!isMounted) {
     return (
@@ -240,64 +245,68 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
 
   return (
     <div 
-      className={`w-full relative ${isDark ? 'bg-[#1e1e1e]' : 'bg-white'} border ${isDark ? 'border-[#3e3e42]' : 'border-gray-200'} rounded-lg overflow-hidden shadow-2xl`}
+      className={`w-full relative ${isDark ? 'bg-[#1e1e1e]' : 'bg-[#ffffff]'} ${isDark ? 'border-[#3e3e42]' : 'border-gray-300'} rounded-lg overflow-hidden shadow-2xl`}
       style={{ height: isFullscreen ? '100vh' : height }}
     >
-      {/* VS Code-like Title Bar - Enhanced Visual */}
-      <div className={`flex items-center justify-between px-4 sm:px-5 py-3 ${isDark ? 'bg-gradient-to-r from-[#1e1e1e] via-[#252526] to-[#2d2d30] border-b-2 border-[#007acc]' : 'bg-gradient-to-r from-gray-50 via-white to-gray-50 border-b-2 border-primary-600'} shadow-sm`}>
-        <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
-          <div className="flex items-center space-x-2.5 min-w-0 group">
-            <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg shadow-sm ${isDark ? 'bg-[#1e1e1e] border border-[#3e3e42] hover:bg-[#252526] hover:border-[#007acc]' : 'bg-white border border-gray-300 hover:bg-gray-50 hover:border-primary-500'} transition-all cursor-default`}>
-              <FileCode className={`h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0 ${isDark ? 'text-[#007acc]' : 'text-primary-600'}`} />
-              <span className={`text-sm sm:text-base font-semibold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
+      {/* VS Code-like Title Bar - Active & Interactive */}
+      <div 
+        className={`flex items-center justify-between px-3 sm:px-4 md:px-5 py-2.5 sm:py-3 ${isDark ? 'bg-gradient-to-r from-[#1e1e1e] via-[#252526] to-[#2d2d30] border-b-2 border-[#007acc]' : 'bg-gradient-to-r from-gray-50 via-white to-gray-50 border-b-2 border-primary-600'} shadow-md cursor-default select-none`}
+        onDoubleClick={toggleFullscreen}
+        title="Double-click to toggle fullscreen"
+      >
+        <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 flex-1 min-w-0">
+          <div className="flex items-center space-x-2 sm:space-x-2.5 min-w-0 group">
+            <div className={`flex items-center space-x-1.5 sm:space-x-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg shadow-sm active:scale-95 transition-all ${isDark ? 'bg-[#1e1e1e] border border-[#3e3e42] hover:bg-[#252526] hover:border-[#007acc]' : 'bg-white border border-gray-300 hover:bg-gray-50 hover:border-primary-500'} cursor-pointer`}>
+              <FileCode className={`h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 flex-shrink-0 ${isDark ? 'text-[#007acc]' : 'text-primary-600'}`} />
+              <span className={`text-xs sm:text-sm md:text-base font-semibold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 {fileName}.{languageMap[language] || 'js'}
               </span>
             </div>
-            <div className={`text-xs sm:text-sm px-3 py-1.5 rounded-lg font-bold flex-shrink-0 shadow-sm ${isDark ? 'bg-[#007acc] text-white border border-[#005a9e]' : 'bg-primary-600 text-white border border-primary-700'}`}>
+            <div className={`text-[10px] sm:text-xs md:text-sm px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg font-bold flex-shrink-0 shadow-sm ${isDark ? 'bg-[#007acc] text-white border border-[#005a9e]' : 'bg-primary-600 text-white border border-primary-700'}`}>
               <span className="hidden sm:inline">{languageMap[language]?.toUpperCase() || 'JAVASCRIPT'}</span>
               <span className="sm:hidden">{languageMap[language]?.toUpperCase().slice(0, 3) || 'JS'}</span>
             </div>
           </div>
         </div>
         
-        <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+        <div className="flex items-center space-x-0.5 sm:space-x-1 md:space-x-2 flex-shrink-0">
           {showThemeToggle && !readOnly && (
             <button
               type="button"
               onClick={toggleTheme}
-              className={`p-2 sm:p-2.5 rounded-lg transition-all ${isDark ? 'hover:bg-[#3e3e42] text-[#cccccc] hover:text-white hover:bg-opacity-80' : 'hover:bg-gray-200 text-gray-600 hover:text-gray-900'} shadow-sm`}
-              title={isDark ? 'Switch to Light Theme (Ctrl+K Ctrl+T)' : 'Switch to Dark Theme (Ctrl+K Ctrl+T)'}
+              className={`p-1.5 sm:p-2 md:p-2.5 rounded-lg transition-all active:scale-90 ${isDark ? 'hover:bg-[#3e3e42] text-[#cccccc] hover:text-white' : 'hover:bg-gray-200 text-gray-600 hover:text-gray-900'} shadow-sm`}
+              title={isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
             >
-              {isDark ? <Sun className="h-4 w-4 sm:h-5 sm:w-5" /> : <Moon className="h-4 w-4 sm:h-5 sm:w-5" />}
+              {isDark ? <Sun className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" /> : <Moon className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />}
             </button>
           )}
           <button
             type="button"
             onClick={() => setShowSettings(!showSettings)}
-            className={`p-2 sm:p-2.5 rounded-lg transition-all ${isDark ? 'hover:bg-[#3e3e42] text-[#cccccc] hover:text-white hover:bg-opacity-80' : 'hover:bg-gray-200 text-gray-600 hover:text-gray-900'} shadow-sm`}
+            className={`p-1.5 sm:p-2 md:p-2.5 rounded-lg transition-all active:scale-90 ${isDark ? `hover:bg-[#3e3e42] ${showSettings ? 'bg-[#3e3e42] text-white' : 'text-[#cccccc]'} hover:text-white` : `hover:bg-gray-200 ${showSettings ? 'bg-gray-200 text-gray-900' : 'text-gray-600'} hover:text-gray-900`} shadow-sm`}
             title="Editor Settings"
           >
-            <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
+            <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />
           </button>
           <button
             type="button"
             onClick={toggleFullscreen}
-            className={`p-2 sm:p-2.5 rounded-lg transition-all ${isDark ? 'hover:bg-[#3e3e42] text-[#cccccc] hover:text-white hover:bg-opacity-80' : 'hover:bg-gray-200 text-gray-600 hover:text-gray-900'} shadow-sm`}
-            title={isFullscreen ? 'Exit Fullscreen (F11)' : 'Enter Fullscreen (F11)'}
+            className={`p-1.5 sm:p-2 md:p-2.5 rounded-lg transition-all active:scale-90 ${isDark ? 'hover:bg-[#3e3e42] text-[#cccccc] hover:text-white' : 'hover:bg-gray-200 text-gray-600 hover:text-gray-900'} shadow-sm`}
+            title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
           >
-            {isFullscreen ? <Minimize2 className="h-4 w-4 sm:h-5 sm:w-5" /> : <Maximize2 className="h-4 w-4 sm:h-5 sm:w-5" />}
+            {isFullscreen ? <Minimize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" /> : <Maximize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />}
           </button>
         </div>
       </div>
 
-      {/* Settings Panel */}
+      {/* Settings Panel - Responsive */}
       {showSettings && (
-        <div className={`absolute top-12 right-2 z-30 ${isDark ? 'bg-[#252526] border-[#3e3e42]' : 'bg-white border-gray-200'} border rounded-md shadow-2xl p-4 min-w-[220px] sm:min-w-[240px]`}>
-          <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-700">
-            <h3 className={`text-sm font-semibold ${isDark ? 'text-[#cccccc]' : 'text-gray-800'}`}>Editor Settings</h3>
+        <div className={`absolute top-11 sm:top-12 right-1 sm:right-2 z-30 ${isDark ? 'bg-[#252526] border-[#3e3e42]' : 'bg-white border-gray-300'} border rounded-md shadow-2xl p-3 sm:p-4 min-w-[200px] sm:min-w-[220px] md:min-w-[240px]`}>
+          <div className={`flex items-center justify-between mb-3 pb-2 border-b ${isDark ? 'border-[#3e3e42]' : 'border-gray-200'}`}>
+            <h3 className={`text-xs sm:text-sm font-semibold ${isDark ? 'text-[#cccccc]' : 'text-gray-800'}`}>Editor Settings</h3>
             <button
               onClick={() => setShowSettings(false)}
-              className={`p-1 rounded hover:bg-opacity-20 ${isDark ? 'hover:bg-white text-gray-400 hover:text-white' : 'hover:bg-gray-200 text-gray-600'}`}
+              className={`p-1 rounded transition-all active:scale-90 ${isDark ? 'hover:bg-[#3e3e42] text-gray-400 hover:text-white' : 'hover:bg-gray-200 text-gray-600'}`}
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -359,8 +368,8 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
         </div>
       )}
 
-      {/* Editor Container */}
-      <div className="w-full relative" style={{ height: editorHeight, minHeight: '300px' }}>
+      {/* Editor Container - No white bars */}
+      <div className={`w-full relative ${isDark ? 'bg-[#1e1e1e]' : 'bg-[#ffffff]'}`} style={{ height: editorHeight, minHeight: '250px' }}>
         <MonacoEditor
           height="100%"
           language={languageMap[language] || 'javascript'}
@@ -369,7 +378,7 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
           theme={theme}
           onMount={handleEditorDidMount}
           loading={
-            <div className={`flex items-center justify-center h-full ${isDark ? 'bg-[#1e1e1e]' : 'bg-white'}`}>
+            <div className={`flex items-center justify-center h-full ${isDark ? 'bg-[#1e1e1e]' : 'bg-[#ffffff]'}`}>
               <div className="text-center">
                 <Loader2 className={`h-8 w-8 animate-spin mx-auto mb-2 ${isDark ? 'text-[#007acc]' : 'text-primary-600'}`} />
                 <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>Loading editor...</p>
@@ -459,25 +468,25 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
         />
       </div>
 
-      {/* VS Code-like Status Bar */}
-      <div className={`flex items-center justify-between px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs ${isDark ? 'bg-[#007acc] text-white' : 'bg-[#0078d4] text-white'} border-t ${isDark ? 'border-[#005a9e]' : 'border-[#005a9e]'}`}>
-        <div className="flex items-center space-x-3 sm:space-x-4 min-w-0">
-          <div className="flex items-center space-x-1.5">
-            <Circle className="h-2 w-2 fill-current" />
-            <span className="font-medium truncate">{languageMap[language]?.toUpperCase() || 'JAVASCRIPT'}</span>
+      {/* VS Code-like Status Bar - Responsive */}
+      <div className={`flex items-center justify-between px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 text-[10px] sm:text-[11px] md:text-xs ${isDark ? 'bg-[#007acc] text-white' : 'bg-[#0078d4] text-white'} border-t-0`}>
+        <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 min-w-0">
+          <div className="flex items-center space-x-1 sm:space-x-1.5">
+            <Circle className="h-1.5 w-1.5 sm:h-2 sm:w-2 fill-current flex-shrink-0" />
+            <span className="font-medium truncate text-xs sm:text-sm">{languageMap[language]?.toUpperCase() || 'JAVASCRIPT'}</span>
           </div>
           <span className="hidden sm:inline opacity-90">Spaces: 2</span>
           <span className="hidden md:inline opacity-90">UTF-8</span>
           <span className="hidden lg:inline opacity-90">LF</span>
         </div>
-        <div className="flex items-center space-x-3 sm:space-x-4 flex-shrink-0">
+        <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 flex-shrink-0">
           {value && (
             <>
               <span className="hidden sm:inline opacity-90">Ln {value.split('\n').length}, Col {value.split('\n').pop().length + 1}</span>
               <span className="hidden md:inline opacity-90">{value.split('\n').length} lines</span>
             </>
           )}
-          <span className="opacity-90">{value ? value.length : 0} chars</span>
+          <span className="opacity-90 text-xs sm:text-sm">{value ? value.length : 0} chars</span>
         </div>
       </div>
     </div>
