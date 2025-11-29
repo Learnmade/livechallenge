@@ -16,7 +16,7 @@ export default function ChallengePage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const params = useParams()
-  const { language, number } = params
+  const { language, number } = params || {}
 
   const [challenge, setChallenge] = useState(null)
   const [code, setCode] = useState('')
@@ -28,28 +28,43 @@ export default function ChallengePage() {
   const [participants, setParticipants] = useState([])
   const [leaderboard, setLeaderboard] = useState([])
   const [loading, setLoading] = useState(true)
+  const [pageError, setPageError] = useState(null)
 
   const fetchChallenge = useCallback(async () => {
+    if (!language || !number) {
+      setPageError('Invalid challenge parameters')
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
+      setPageError(null)
       const response = await fetch(`/api/challenges/${language}/${number}`, {
         credentials: 'include',
       })
+      
       if (response.ok) {
         const data = await response.json()
-        setChallenge(data.challenge)
-        if (data.challenge?.starterCode) {
-          setCode(data.challenge.starterCode)
+        if (data && data.challenge) {
+          setChallenge(data.challenge)
+          if (data.challenge?.starterCode) {
+            setCode(data.challenge.starterCode || '')
+          } else {
+            setCode('')
+          }
         } else {
-          setCode('')
+          setPageError('Challenge data is invalid')
         }
       } else {
-        const errorData = await response.json()
+        const errorData = await response.json().catch(() => ({ error: 'Failed to load challenge' }))
         console.error('Error fetching challenge:', errorData)
+        setPageError(errorData.error || 'Failed to load challenge')
         toast.error(errorData.error || 'Failed to load challenge')
       }
     } catch (error) {
       console.error('Error fetching challenge:', error)
+      setPageError('Failed to load challenge due to network error')
       toast.error('Failed to load challenge due to network error')
     } finally {
       setLoading(false)
@@ -57,26 +72,36 @@ export default function ChallengePage() {
   }, [language, number])
 
   const fetchParticipants = useCallback(async () => {
+    if (!language || !number) return
+    
     try {
-      const response = await fetch(`/api/challenges/${language}/${number}/participants`)
+      const response = await fetch(`/api/challenges/${language}/${number}/participants`, {
+        credentials: 'include',
+      })
       if (response.ok) {
         const data = await response.json()
-        setParticipants(data.participants || [])
+        setParticipants(Array.isArray(data?.participants) ? data.participants : [])
       }
     } catch (error) {
       console.error('Error fetching participants:', error)
+      // Don't crash on participant fetch errors
     }
   }, [language, number])
 
   const fetchLeaderboard = useCallback(async () => {
+    if (!language || !number) return
+    
     try {
-      const response = await fetch(`/api/challenges/${language}/${number}/leaderboard`)
+      const response = await fetch(`/api/challenges/${language}/${number}/leaderboard`, {
+        credentials: 'include',
+      })
       if (response.ok) {
         const data = await response.json()
-        setLeaderboard(data.leaderboard || [])
+        setLeaderboard(Array.isArray(data?.leaderboard) ? data.leaderboard : [])
       }
     } catch (error) {
       console.error('Error fetching leaderboard:', error)
+      // Don't crash on leaderboard fetch errors
     }
   }, [language, number])
 
@@ -86,25 +111,32 @@ export default function ChallengePage() {
       router.push('/login')
       return
     }
-    // Only fetch data if user is authenticated
-    if (!authLoading && user) {
+    // Only fetch data if user is authenticated and params are available
+    if (!authLoading && user && language && number) {
       fetchChallenge()
       fetchParticipants()
       fetchLeaderboard()
       
       // Set up polling for live updates
       const interval = setInterval(() => {
-        fetchParticipants()
-        fetchLeaderboard()
+        if (language && number) {
+          fetchParticipants()
+          fetchLeaderboard()
+        }
       }, 5000) // Update every 5 seconds
 
       return () => clearInterval(interval)
     }
-  }, [user, authLoading, router, fetchChallenge, fetchParticipants, fetchLeaderboard])
+  }, [user, authLoading, router, language, number, fetchChallenge, fetchParticipants, fetchLeaderboard])
 
   const handleRun = async () => {
     if (!code.trim()) {
       toast.error('Please write some code first')
+      return
+    }
+
+    if (!language || !number) {
+      toast.error('Invalid challenge parameters')
       return
     }
 
@@ -116,10 +148,11 @@ export default function ChallengePage() {
       const response = await fetch(`/api/challenges/${language}/${number}/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ code, language }),
       })
 
-      const data = await response.json()
+      const data = await response.json().catch(() => ({ error: 'Failed to parse response' }))
 
       if (response.ok) {
         setOutput(data.output || '')
@@ -130,6 +163,7 @@ export default function ChallengePage() {
         setError(data.error || 'Execution failed')
       }
     } catch (error) {
+      console.error('Run code error:', error)
       setError('Failed to run code. Please try again.')
     } finally {
       setIsRunning(false)
@@ -142,6 +176,11 @@ export default function ChallengePage() {
       return
     }
 
+    if (!language || !number) {
+      toast.error('Invalid challenge parameters')
+      return
+    }
+
     setIsSubmitting(true)
     setSubmissionResult(null)
     setOutput('')
@@ -151,17 +190,19 @@ export default function ChallengePage() {
       const response = await fetch(`/api/challenges/${language}/${number}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ code, language }),
       })
 
-      const data = await response.json()
+      const data = await response.json().catch(() => ({ error: 'Failed to parse response' }))
 
       if (response.ok) {
         setSubmissionResult(data)
         if (data.status === 'passed') {
-          toast.success(`Congratulations! All test cases passed. You earned ${data.pointsEarned} points!`)
-          fetchChallenge() // Refresh challenge data
-          fetchLeaderboard() // Refresh leaderboard
+          toast.success(`Congratulations! All test cases passed. You earned ${data.pointsEarned || 0} points!`)
+          // Refresh challenge data and leaderboard
+          if (fetchChallenge) fetchChallenge()
+          if (fetchLeaderboard) fetchLeaderboard()
         } else {
           toast.error('Some test cases failed. Check the results below.')
         }
@@ -169,10 +210,28 @@ export default function ChallengePage() {
         toast.error(data.error || 'Submission failed')
       }
     } catch (error) {
+      console.error('Submit error:', error)
       toast.error('Failed to submit. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  // Validate params
+  if (!language || !number) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">Invalid challenge URL</p>
+          <button
+            onClick={() => router.push('/challenges')}
+            className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg transition-colors"
+          >
+            Go to Challenges
+          </button>
+        </div>
+      </div>
+    )
   }
 
   // Show loading state while checking authentication
@@ -210,11 +269,31 @@ export default function ChallengePage() {
     )
   }
 
-  if (!challenge) {
+  if (pageError || !challenge) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600">Challenge not found</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
+        <Navigation />
+        <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
+          <div className="text-center bg-white rounded-xl border border-gray-200 shadow-sm p-8 max-w-md">
+            <p className="text-gray-600 mb-4">{pageError || 'Challenge not found'}</p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => router.push('/challenges')}
+                className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg transition-colors"
+              >
+                Go to Challenges
+              </button>
+              <button
+                onClick={() => {
+                  setPageError(null)
+                  fetchChallenge()
+                }}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     )
@@ -230,23 +309,27 @@ export default function ChallengePage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
             <div className="flex-1 min-w-0">
               <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 truncate">
-                Challenge #{challenge.challengeNumber}: {challenge.title}
+                Challenge #{challenge?.challengeNumber || number}: {challenge?.title || 'Loading...'}
               </h1>
               <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2">
-                <span className={`px-2 py-1 rounded text-xs font-medium ${
-                  challenge.difficulty === 'easy' ? 'bg-green-50 text-green-700 border border-green-200' :
-                  challenge.difficulty === 'medium' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
-                  'bg-red-50 text-red-700 border border-red-200'
-                }`}>
-                  {challenge.difficulty}
-                </span>
-                <span className="text-gray-600 text-xs sm:text-sm flex items-center">
-                  <Trophy className="h-3 w-3 sm:h-4 sm:w-4 mr-1 text-yellow-500" />
-                  {challenge.points} points
-                </span>
+                {challenge?.difficulty && (
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${
+                    challenge.difficulty === 'easy' ? 'bg-green-50 text-green-700 border border-green-200' :
+                    challenge.difficulty === 'medium' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
+                    'bg-red-50 text-red-700 border border-red-200'
+                  }`}>
+                    {challenge.difficulty}
+                  </span>
+                )}
+                {challenge?.points !== undefined && (
+                  <span className="text-gray-600 text-xs sm:text-sm flex items-center">
+                    <Trophy className="h-3 w-3 sm:h-4 sm:w-4 mr-1 text-yellow-500" />
+                    {challenge.points} points
+                  </span>
+                )}
                 <span className="text-gray-600 text-xs sm:text-sm flex items-center">
                   <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1 text-primary-600" />
-                  {participants.length} active
+                  {Array.isArray(participants) ? participants.length : 0} active
                 </span>
               </div>
             </div>
@@ -265,22 +348,24 @@ export default function ChallengePage() {
           {/* Left Column - Problem & Editor */}
           <div className="lg:col-span-3 space-y-4 sm:space-y-6">
             {/* Problem Description */}
-            <ProblemDisplay problem={challenge} />
+            {challenge && <ProblemDisplay problem={challenge} />}
 
             {/* Code Editor */}
             <div className="rounded-xl overflow-hidden shadow-xl">
-              <CodeEditor
-                language={language}
-                value={code}
-                onChange={(value) => {
-                  if (value !== undefined && value !== null) {
-                    setCode(value)
-                  }
-                }}
-                height="400px"
-                showThemeToggle={true}
-                fileName={`challenge-${number}`}
-              />
+              {language && (
+                <CodeEditor
+                  language={language}
+                  value={code || ''}
+                  onChange={(value) => {
+                    if (value !== undefined && value !== null) {
+                      setCode(value)
+                    }
+                  }}
+                  height="400px"
+                  showThemeToggle={true}
+                  fileName={`challenge-${number || '1'}`}
+                />
+              )}
               <div className="bg-gray-50 px-3 sm:px-4 py-2.5 sm:py-3 border-t border-gray-200 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                 <button
                   onClick={handleRun}
@@ -320,12 +405,14 @@ export default function ChallengePage() {
 
           {/* Right Column - Live Participants & Leaderboard */}
           <div className="lg:col-span-1 space-y-4 sm:space-y-6">
-            <LiveParticipants participants={participants} />
-            <ChallengeLeaderboard 
-              leaderboard={leaderboard}
-              language={language}
-              challengeNumber={number}
-            />
+            <LiveParticipants participants={Array.isArray(participants) ? participants : []} />
+            {language && number && (
+              <ChallengeLeaderboard 
+                leaderboard={Array.isArray(leaderboard) ? leaderboard : []}
+                language={language}
+                challengeNumber={number}
+              />
+            )}
           </div>
         </div>
       </div>

@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
-import { Moon, Sun, Loader2, Maximize2, Minimize2, Settings, FileCode, X, Circle } from 'lucide-react'
+import { Moon, Sun, Loader2, Maximize2, Minimize2, Settings, FileCode, X, Circle, ChevronRight, ChevronDown, Folder, File } from 'lucide-react'
 
 // Configure Monaco Editor workers - use simpler approach
 if (typeof window !== 'undefined') {
@@ -51,6 +51,8 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
   const [fontSize, setFontSize] = useState(14)
   const [wordWrap, setWordWrap] = useState(true)
   const [minimap, setMinimap] = useState(false)
+  const [sidebarExpanded, setSidebarExpanded] = useState(true)
+  const [sidebarWidth, setSidebarWidth] = useState(250)
 
   useEffect(() => {
     setIsMounted(true)
@@ -226,6 +228,36 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
     typescript: 'typescript',
   }
 
+  // Get file icon color based on language
+  const getFileIconColor = (lang) => {
+    const colors = {
+      javascript: '#F7DF1E',
+      python: '#3776AB',
+      cpp: '#00599C',
+      java: '#ED8B00',
+      go: '#00ADD8',
+      rust: '#000000',
+      csharp: '#239120',
+      typescript: '#3178C6',
+    }
+    return colors[lang] || '#8b949e'
+  }
+
+  // Get file extension
+  const getFileExtension = (lang) => {
+    const extensions = {
+      javascript: 'js',
+      python: 'py',
+      cpp: 'cpp',
+      java: 'java',
+      go: 'go',
+      rust: 'rs',
+      csharp: 'cs',
+      typescript: 'ts',
+    }
+    return extensions[lang] || 'js'
+  }
+
   const isDark = theme === 'vs-dark'
   // Calculate editor height accounting for title bar and status bar
   const titleBarHeight = 60 // Approximate title bar height
@@ -247,12 +279,12 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
 
   return (
     <div 
-      className={`w-full relative ${isDark ? 'bg-[#1a1a1a]' : 'bg-[#ffffff]'} ${isDark ? 'border-[#21262d]' : 'border-gray-200'} rounded-xl overflow-hidden shadow-2xl`}
+      className={`w-full relative ${isDark ? 'bg-[#1a1a1a]' : 'bg-[#ffffff]'} ${isDark ? 'border-[#21262d]' : 'border-gray-200'} rounded-xl overflow-hidden shadow-2xl flex flex-col`}
       style={{ height: isFullscreen ? '100vh' : height }}
     >
       {/* Cursor-like Title Bar - Minimal & Clean */}
       <div 
-        className={`flex items-center justify-between px-4 sm:px-5 md:px-6 py-2.5 sm:py-3 ${isDark ? 'bg-[#161b22] border-b border-[#21262d]' : 'bg-[#f6f8fa] border-b border-gray-200'} cursor-default select-none`}
+        className={`flex items-center justify-between px-4 sm:px-5 md:px-6 py-2.5 sm:py-3 ${isDark ? 'bg-[#161b22] border-b border-[#21262d]' : 'bg-[#f6f8fa] border-b border-gray-200'} cursor-default select-none flex-shrink-0`}
         onDoubleClick={toggleFullscreen}
         title="Double-click to toggle fullscreen"
       >
@@ -370,9 +402,73 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
         </div>
       )}
 
-      {/* Editor Container - Cursor Style */}
-      <div className={`w-full relative ${isDark ? 'bg-[#1a1a1a]' : 'bg-[#ffffff]'}`} style={{ height: editorHeight, minHeight: '250px' }}>
-        <MonacoEditor
+      {/* Main Content Area - Sidebar + Editor */}
+      <div className="flex flex-1 overflow-hidden" style={{ height: editorHeight, minHeight: '250px' }}>
+        {/* File Explorer Sidebar */}
+        {sidebarExpanded && (
+          <div 
+            className={`flex-shrink-0 border-r ${isDark ? 'bg-[#161b22] border-[#21262d]' : 'bg-[#f6f8fa] border-gray-200'}`}
+            style={{ width: `${sidebarWidth}px` }}
+          >
+            <div className={`px-3 py-2 border-b ${isDark ? 'border-[#21262d]' : 'border-gray-200'}`}>
+              <div className="flex items-center justify-between">
+                <span className={`text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-[#8b949e]' : 'text-gray-600'}`}>
+                  Explorer
+                </span>
+                <button
+                  onClick={() => setSidebarExpanded(false)}
+                  className={`p-1 rounded transition-colors ${isDark ? 'hover:bg-[#21262d]' : 'hover:bg-gray-200'}`}
+                  title="Hide Sidebar"
+                >
+                  <ChevronRight className={`h-4 w-4 ${isDark ? 'text-[#8b949e]' : 'text-gray-600'}`} />
+                </button>
+              </div>
+            </div>
+            <div className="py-2 overflow-y-auto" style={{ height: `calc(${editorHeight} - 40px)` }}>
+              {/* File Tree */}
+              <div className="px-2">
+                <div className={`flex items-center space-x-1.5 px-2 py-1.5 rounded-md cursor-pointer transition-colors ${isDark ? 'hover:bg-[#21262d]' : 'hover:bg-gray-100'}`}>
+                  <ChevronDown className={`h-3.5 w-3.5 ${isDark ? 'text-[#8b949e]' : 'text-gray-600'}`} />
+                  <Folder className={`h-4 w-4 ${isDark ? 'text-[#58a6ff]' : 'text-primary-600'}`} />
+                  <span className={`text-sm font-medium ${isDark ? 'text-[#c9d1d9]' : 'text-gray-900'}`}>
+                    {fileName || 'Challenge'}
+                  </span>
+                </div>
+                <div className="ml-6 mt-1">
+                  <div className={`flex items-center space-x-2 px-2 py-1.5 rounded-md cursor-pointer ${isDark ? 'bg-[#1f6feb] bg-opacity-20' : 'bg-blue-50'} border-l-2 ${isDark ? 'border-[#1f6feb]' : 'border-primary-600'} transition-colors`}>
+                    <div 
+                      className="w-4 h-4 rounded flex items-center justify-center font-bold text-xs"
+                      style={{ 
+                        backgroundColor: getFileIconColor(language),
+                        color: language === 'rust' ? '#fff' : '#000'
+                      }}
+                    >
+                      {languageMap[language]?.charAt(0).toUpperCase() || 'J'}
+                    </div>
+                    <span className={`text-sm ${isDark ? 'text-[#c9d1d9]' : 'text-gray-900'}`}>
+                      {fileName || 'solution'}.{getFileExtension(language)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Sidebar Toggle Button (when collapsed) */}
+        {!sidebarExpanded && (
+          <button
+            onClick={() => setSidebarExpanded(true)}
+            className={`flex-shrink-0 w-6 border-r ${isDark ? 'bg-[#161b22] border-[#21262d] hover:bg-[#21262d]' : 'bg-[#f6f8fa] border-gray-200 hover:bg-gray-100'} transition-colors flex items-center justify-center`}
+            title="Show Sidebar"
+          >
+            <ChevronRight className={`h-4 w-4 ${isDark ? 'text-[#8b949e]' : 'text-gray-600'}`} />
+          </button>
+        )}
+
+        {/* Editor Container - Cursor Style */}
+        <div className={`flex-1 relative ${isDark ? 'bg-[#1a1a1a]' : 'bg-[#ffffff]'} overflow-hidden`}>
+          <MonacoEditor
           height="100%"
           language={languageMap[language] || 'javascript'}
           value={value ?? ''}
@@ -468,10 +564,11 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
             disableMonospaceOptimizations: false,
           }}
         />
+        </div>
       </div>
 
       {/* Cursor-like Status Bar - Minimal & Clean */}
-      <div className={`flex items-center justify-between px-4 sm:px-5 md:px-6 py-2 text-xs ${isDark ? 'bg-[#161b22] text-[#8b949e] border-t border-[#21262d]' : 'bg-[#f6f8fa] text-gray-600 border-t border-gray-200'}`}>
+      <div className={`flex items-center justify-between px-4 sm:px-5 md:px-6 py-2 text-xs flex-shrink-0 ${isDark ? 'bg-[#161b22] text-[#8b949e] border-t border-[#21262d]' : 'bg-[#f6f8fa] text-gray-600 border-t border-gray-200'}`}>
         <div className="flex items-center space-x-4 sm:space-x-5 min-w-0">
           <div className="flex items-center space-x-2">
             <Circle className={`h-2 w-2 fill-current flex-shrink-0 ${isDark ? 'text-[#238636]' : 'text-green-600'}`} />

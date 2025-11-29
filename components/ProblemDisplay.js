@@ -19,11 +19,11 @@ export default function ProblemDisplay({ problem }) {
       </div>
       <div className="p-6 space-y-6">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">{problem.title}</h3>
-          <p className="text-gray-700 whitespace-pre-wrap">{problem.description}</p>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">{problem?.title || 'No title'}</h3>
+          <p className="text-gray-700 whitespace-pre-wrap">{problem?.description || 'No description available'}</p>
         </div>
 
-        {problem.examples && problem.examples.length > 0 && (
+        {problem?.examples && Array.isArray(problem.examples) && problem.examples.length > 0 && (
           <div>
             <h4 className="text-md font-semibold text-gray-900 mb-3">Examples:</h4>
             {problem.examples.map((example, index) => (
@@ -31,16 +31,16 @@ export default function ProblemDisplay({ problem }) {
                 <div className="mb-2">
                   <span className="text-sm font-medium text-gray-700">Input:</span>
                   <pre className="mt-1 text-sm text-gray-900 bg-white p-3 rounded border border-gray-200">
-                    {example.input}
+                    {example?.input || ''}
                   </pre>
                 </div>
                 <div>
                   <span className="text-sm font-medium text-gray-700">Output:</span>
                   <pre className="mt-1 text-sm text-gray-900 bg-white p-3 rounded border border-gray-200">
-                    {example.output}
+                    {example?.output || ''}
                   </pre>
                 </div>
-                {example.explanation && (
+                {example?.explanation && (
                   <div className="mt-2">
                     <span className="text-sm font-medium text-gray-700">Explanation:</span>
                     <p className="mt-1 text-sm text-gray-600">{example.explanation}</p>
@@ -51,7 +51,7 @@ export default function ProblemDisplay({ problem }) {
           </div>
         )}
 
-        {problem.constraints && (
+        {problem?.constraints && Array.isArray(problem.constraints) && problem.constraints.length > 0 && (
           <div>
             <h4 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
               <AlertCircle className="h-4 w-4 mr-2 text-yellow-500" />
@@ -59,13 +59,13 @@ export default function ProblemDisplay({ problem }) {
             </h4>
             <ul className="list-disc list-inside space-y-1 text-gray-700">
               {problem.constraints.map((constraint, index) => (
-                <li key={index} className="text-sm">{constraint}</li>
+                <li key={index} className="text-sm">{constraint || ''}</li>
               ))}
           </ul>
           </div>
         )}
 
-        {problem.note && (
+        {problem?.note && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-700">{problem.note}</p>
           </div>
