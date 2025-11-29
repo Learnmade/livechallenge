@@ -245,70 +245,154 @@ const getTestCases = (title) => {
 }
 
 export async function POST(request) {
+  const startTime = Date.now()
+  let totalCreated = 0
+  let totalErrors = 0
+  const errors = []
+  const created = []
+
   try {
     const user = await requireHost(request)
     await connectDB()
 
+    // Get count before deletion
+    const existingCount = await Challenge.countDocuments({})
+    
     // Clear existing challenges
-    await Challenge.deleteMany({})
+    const deleteResult = await Challenge.deleteMany({})
+    console.log(`🗑️  Deleted ${deleteResult.deletedCount} existing challenges`)
 
-    let totalCreated = 0
     const languages = Object.keys(challengeTemplates)
+    const existingSlugs = new Set() // Track slugs across all languages to ensure uniqueness
 
+    // Process each language
     for (const language of languages) {
       const templates = challengeTemplates[language]
-      
-      // Get existing slugs for this language to ensure uniqueness
-      const existingChallenges = await Challenge.find({ language })
-      const existingSlugs = existingChallenges.map(c => c.slug).filter(Boolean)
+      let languageCreated = 0
+      let languageErrors = 0
       
       for (let i = 0; i < templates.length; i++) {
-        const template = templates[i]
-        const challengeNumber = i + 1
-        const baseSlug = generateSlug(template.title)
-        
-        // Ensure slug is unique for this language
-        let slug = baseSlug
-        let counter = 1
-        while (existingSlugs.includes(slug)) {
-          slug = `${baseSlug}-${counter}`
-          counter++
+        try {
+          const template = templates[i]
+          const challengeNumber = i + 1
+          const baseSlug = generateSlug(template.title)
+          
+          // Ensure slug is unique across all languages
+          let slug = baseSlug
+          let counter = 1
+          const languageSlugKey = `${language}:${slug}`
+          
+          while (existingSlugs.has(languageSlugKey)) {
+            slug = `${baseSlug}-${counter}`
+            counter++
+          }
+          existingSlugs.add(`${language}:${slug}`)
+
+          // Validate required fields
+          if (!template.title || !template.difficulty || !template.points) {
+            throw new Error(`Missing required fields for ${language} challenge ${challengeNumber}`)
+          }
+
+          // Get challenge data
+          const description = getDescription(template.title, challengeNumber)
+          const examples = getExamples(template.title)
+          const testCases = getTestCases(template.title)
+          const starterCode = getStarterCode(language, challengeNumber)
+
+          // Validate test cases
+          if (!testCases || testCases.length === 0) {
+            console.warn(`⚠️  Warning: No test cases for ${language} challenge "${template.title}"`)
+          }
+
+          // Create challenge
+          const challenge = await Challenge.create({
+            title: template.title,
+            description: description,
+            difficulty: template.difficulty,
+            language: language,
+            challengeNumber: challengeNumber,
+            slug: slug,
+            examples: examples,
+            constraints: ['1 <= n <= 10^5'],
+            starterCode: starterCode,
+            testCases: testCases,
+            points: template.points,
+            isActive: true,
+          })
+
+          totalCreated++
+          languageCreated++
+          created.push({
+            language,
+            number: challengeNumber,
+            title: template.title,
+            slug: slug,
+          })
+
+          console.log(`✅ Created ${language} challenge ${challengeNumber}: ${template.title} (slug: ${slug})`)
+        } catch (error) {
+          totalErrors++
+          languageErrors++
+          const errorMsg = `${language} challenge ${i + 1} (${templates[i]?.title || 'Unknown'}): ${error.message}`
+          errors.push(errorMsg)
+          console.error(`❌ Error creating ${errorMsg}`)
         }
-        existingSlugs.push(slug)
-
-        const challenge = await Challenge.create({
-          title: template.title,
-          description: getDescription(template.title, challengeNumber),
-          difficulty: template.difficulty,
-          language: language,
-          challengeNumber: challengeNumber,
-          slug: slug,
-          examples: getExamples(template.title),
-          constraints: ['1 <= n <= 10^5'],
-          starterCode: getStarterCode(language, challengeNumber),
-          testCases: getTestCases(template.title),
-          points: template.points,
-          isActive: true,
-        })
-
-        totalCreated++
       }
+
+      console.log(`📊 ${language}: ${languageCreated} created, ${languageErrors} errors`)
     }
 
-    return NextResponse.json({
-      message: `Successfully created ${totalCreated} challenges!`,
+    const duration = Date.now() - startTime
+    const summary = {
+      success: totalErrors === 0,
       totalCreated,
+      totalErrors,
+      languagesProcessed: languages.length,
+      challengesPerLanguage: challengeTemplates[languages[0]]?.length || 0,
+      duration: `${(duration / 1000).toFixed(2)}s`,
+      deleted: deleteResult.deletedCount,
+      created: created.slice(0, 10), // Show first 10 created challenges
+      errors: errors.slice(0, 10), // Show first 10 errors
+    }
+
+    if (totalErrors > 0) {
+      console.warn(`⚠️  Seeding completed with ${totalErrors} errors`)
+      return NextResponse.json({
+        message: `Seeding completed with ${totalErrors} errors. ${totalCreated} challenges created successfully.`,
+        ...summary,
+      }, { status: 207 }) // 207 Multi-Status
+    }
+
+    console.log(`🎉 Successfully created ${totalCreated} challenges in ${summary.duration}`)
+    return NextResponse.json({
+      message: `Successfully created ${totalCreated} challenges across ${languages.length} languages!`,
+      ...summary,
     }, { status: 200 })
   } catch (error) {
-    if (error.message === 'Unauthorized' || error.message.includes('Forbidden')) {
+    if (error.message === 'Unauthorized' || error.message.includes('Forbidden') || error.message.includes('Host access required')) {
       return NextResponse.json(
-        { error: error.message },
-        { status: error.message === 'Unauthorized' ? 401 : 403 }
+        { 
+          error: 'Unauthorized',
+          message: 'Host access required to seed challenges',
+          details: error.message 
+        },
+        { status: 403 }
       )
     }
-    console.error('Seed challenges error:', error)
+    
+    console.error('❌ Seed challenges error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        message: 'Failed to seed challenges',
+        details: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+        partialResults: {
+          totalCreated,
+          totalErrors,
+          errors: errors.slice(0, 5),
+        }
+      },
       { status: 500 }
     )
   }

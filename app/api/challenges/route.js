@@ -56,7 +56,9 @@ async function getChallengesHandler(request) {
         
         // Ensure slug exists (fallback to generated slug if missing)
         if (!challengeObj.slug) {
-          challengeObj.slug = `challenge-${challengeObj.challengeNumber}`
+          // Generate slug from title if missing
+          const { generateSlug } = await import('@/lib/slug')
+          challengeObj.slug = generateSlug(challengeObj.title) || `challenge-${challengeObj.challengeNumber}`
         }
 
         const hasAttempted = await ChallengeSubmission.exists({ 

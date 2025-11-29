@@ -187,17 +187,45 @@ export default function AdminPage() {
         method: 'POST',
         credentials: 'include',
       })
-
       const data = await response.json()
-
-      if (response.ok) {
-        toast.success(`Successfully created ${data.totalCreated} challenges!`)
+      
+      if (response.ok || response.status === 207) {
+        // 207 Multi-Status means partial success
+        if (data.totalErrors > 0) {
+          toast.success(
+            `Seeding completed with ${data.totalErrors} errors. ${data.totalCreated} challenges created.`,
+            { duration: 5000 }
+          )
+        } else {
+          toast.success(
+            `Successfully created ${data.totalCreated} challenges across ${data.languagesProcessed} languages!`,
+            { duration: 5000 }
+          )
+        }
+        
+        // Show detailed summary in console
+        console.log('Seeding Summary:', {
+          totalCreated: data.totalCreated,
+          totalErrors: data.totalErrors,
+          duration: data.duration,
+          languagesProcessed: data.languagesProcessed,
+        })
+        
+        // Refresh challenges list if available
+        if (fetchChallenges) {
+          setTimeout(() => fetchChallenges(), 1000)
+        }
       } else {
-        toast.error(data.error || 'Failed to seed challenges')
+        const errorMsg = data.message || data.error || 'Failed to seed challenges'
+        toast.error(errorMsg, { duration: 6000 })
+        
+        if (data.details) {
+          console.error('Seeding error details:', data.details)
+        }
       }
     } catch (error) {
       console.error('Seed challenges error:', error)
-      toast.error('Failed to seed challenges')
+      toast.error('Failed to seed challenges. Please check the console for details.')
     } finally {
       setIsSeeding(false)
     }
