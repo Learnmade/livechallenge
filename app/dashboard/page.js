@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
-import { Trophy, Zap, Award, TrendingUp, Target } from 'lucide-react'
+import { Trophy, Zap, Award, TrendingUp, Target, Code } from 'lucide-react'
 import Link from 'next/link'
 
 export default function DashboardPage() {
@@ -29,52 +29,66 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Welcome Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Dashboard</h1>
-          <p className="text-gray-600">Welcome back, {user.name}!</p>
+          <div className="bg-gradient-to-r from-primary-600 to-blue-700 rounded-2xl p-8 text-white shadow-xl mb-8">
+            <h1 className="text-4xl font-bold mb-2">Welcome back, {user.name}! 👋</h1>
+            <p className="text-blue-100 text-lg">Ready to tackle some coding challenges today?</p>
+          </div>
         </div>
 
         {/* Stats Cards */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <Zap className="h-8 w-8 text-yellow-500" />
-              <span className="text-2xl font-bold text-gray-900">{user.xp}</span>
+          <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl border-2 border-yellow-200 shadow-lg p-6 hover:shadow-xl transition-all transform hover:scale-105">
+            <div className="flex items-center justify-between mb-3">
+              <div className="bg-yellow-500 rounded-lg p-3">
+                <Zap className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-3xl font-bold text-gray-900">{user.xp}</span>
             </div>
-            <p className="text-gray-600 text-sm">Total XP</p>
+            <p className="text-gray-700 font-semibold">Total XP</p>
+            <p className="text-xs text-gray-600 mt-1">Keep coding to earn more!</p>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <Target className="h-8 w-8 text-primary-600" />
-              <span className="text-2xl font-bold text-gray-900">Level {user.level}</span>
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border-2 border-blue-200 shadow-lg p-6 hover:shadow-xl transition-all transform hover:scale-105">
+            <div className="flex items-center justify-between mb-3">
+              <div className="bg-primary-600 rounded-lg p-3">
+                <Target className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-3xl font-bold text-gray-900">Level {user.level}</span>
             </div>
-            <p className="text-gray-600 text-sm">Current Level</p>
-            <div className="mt-3 bg-gray-200 rounded-full h-2">
+            <p className="text-gray-700 font-semibold">Current Level</p>
+            <div className="mt-3 bg-white rounded-full h-3 shadow-inner">
               <div
-                className="bg-primary-600 h-2 rounded-full transition-all"
+                className="bg-gradient-to-r from-primary-600 to-blue-600 h-3 rounded-full transition-all shadow-sm"
                 style={{ width: `${progressToNextLevel}%` }}
               />
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-600 mt-2 font-medium">
               {500 - (user.xp % 500)} XP to next level
             </p>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <Trophy className="h-8 w-8 text-yellow-500" />
-              <span className="text-2xl font-bold text-gray-900">0</span>
+          <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl border-2 border-amber-200 shadow-lg p-6 hover:shadow-xl transition-all transform hover:scale-105">
+            <div className="flex items-center justify-between mb-3">
+              <div className="bg-yellow-500 rounded-lg p-3">
+                <Trophy className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-3xl font-bold text-gray-900">0</span>
             </div>
-            <p className="text-gray-600 text-sm">Battles Won</p>
+            <p className="text-gray-700 font-semibold">Battles Won</p>
+            <p className="text-xs text-gray-600 mt-1">Start winning challenges!</p>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <TrendingUp className="h-8 w-8 text-green-500" />
-              <span className="text-2xl font-bold text-gray-900">#--</span>
+          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl border-2 border-green-200 shadow-lg p-6 hover:shadow-xl transition-all transform hover:scale-105">
+            <div className="flex items-center justify-between mb-3">
+              <div className="bg-green-500 rounded-lg p-3">
+                <TrendingUp className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-3xl font-bold text-gray-900">#--</span>
             </div>
-            <p className="text-gray-600 text-sm">Global Rank</p>
+            <p className="text-gray-700 font-semibold">Global Rank</p>
+            <p className="text-xs text-gray-600 mt-1">Climb the leaderboard!</p>
           </div>
         </div>
 
@@ -82,45 +96,73 @@ export default function DashboardPage() {
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           <Link
             href="/challenges"
-            className="bg-gradient-to-r from-primary-600 to-blue-700 rounded-xl p-6 hover:shadow-xl transition-all transform hover:scale-[1.01] shadow-lg"
+            className="group relative bg-gradient-to-r from-primary-600 via-blue-600 to-blue-700 rounded-2xl p-8 hover:shadow-2xl transition-all transform hover:scale-[1.02] shadow-xl overflow-hidden"
           >
-            <h2 className="text-2xl font-bold text-white mb-2">Start Challenges</h2>
-            <p className="text-blue-100">Solve coding challenges in multiple languages</p>
+            <div className="absolute inset-0 bg-gradient-to-r from-primary-700 to-blue-800 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="bg-white/20 rounded-xl p-4">
+                  <Code className="h-8 w-8 text-white" />
+                </div>
+                <div className="text-4xl">🚀</div>
+              </div>
+              <h2 className="text-3xl font-bold text-white mb-3">Start Challenges</h2>
+              <p className="text-blue-100 text-lg mb-4">Solve coding challenges in multiple languages</p>
+              <div className="flex items-center text-white font-semibold">
+                <span>Explore Now</span>
+                <span className="ml-2 group-hover:translate-x-2 transition-transform">→</span>
+              </div>
+            </div>
           </Link>
 
           <Link
             href="/history"
-            className="bg-white rounded-xl border border-gray-200 p-6 hover:border-primary-500 hover:shadow-md transition-all shadow-sm"
+            className="group bg-white rounded-2xl border-2 border-gray-200 p-8 hover:border-primary-400 hover:shadow-xl transition-all shadow-lg"
           >
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Submission History</h2>
-            <p className="text-gray-600">View your past submissions and solutions</p>
+            <div className="flex items-center justify-between mb-4">
+              <div className="bg-primary-50 rounded-xl p-4">
+                <Trophy className="h-8 w-8 text-primary-600" />
+              </div>
+              <div className="text-4xl">📊</div>
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-3">Submission History</h2>
+            <p className="text-gray-600 text-lg mb-4">View your past submissions and solutions</p>
+            <div className="flex items-center text-primary-600 font-semibold">
+              <span>View History</span>
+              <span className="ml-2 group-hover:translate-x-2 transition-transform">→</span>
+            </div>
           </Link>
         </div>
 
         {/* Recent Achievements */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center">
-            <Award className="h-6 w-6 mr-2 text-yellow-500" />
-            Achievements
-          </h2>
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <div className="text-3xl mb-2">🎯</div>
-              <h3 className="font-semibold text-gray-900 mb-1">First Victory</h3>
-              <p className="text-sm text-gray-600">Win your first battle</p>
-              <div className="mt-2 text-xs text-gray-500">Locked</div>
+        <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-xl p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-3xl font-bold text-gray-900 flex items-center">
+              <div className="bg-yellow-100 rounded-xl p-3 mr-3">
+                <Award className="h-8 w-8 text-yellow-600" />
+              </div>
+              Achievements
+            </h2>
+            <span className="text-sm text-gray-500 font-medium">Unlock more by solving challenges</span>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="bg-gradient-to-br from-red-50 to-pink-50 rounded-xl p-6 border-2 border-red-100 hover:border-red-300 transition-all transform hover:scale-105">
+              <div className="text-5xl mb-3">🎯</div>
+              <h3 className="font-bold text-gray-900 mb-2 text-lg">First Victory</h3>
+              <p className="text-sm text-gray-600 mb-3">Win your first battle</p>
+              <div className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-semibold inline-block">Locked</div>
             </div>
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <div className="text-3xl mb-2">⚡</div>
-              <h3 className="font-semibold text-gray-900 mb-1">Speed Demon</h3>
-              <p className="text-sm text-gray-600">Solve a problem in under 30 seconds</p>
-              <div className="mt-2 text-xs text-gray-500">Locked</div>
+            <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl p-6 border-2 border-yellow-100 hover:border-yellow-300 transition-all transform hover:scale-105">
+              <div className="text-5xl mb-3">⚡</div>
+              <h3 className="font-bold text-gray-900 mb-2 text-lg">Speed Demon</h3>
+              <p className="text-sm text-gray-600 mb-3">Solve a problem in under 30 seconds</p>
+              <div className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-semibold inline-block">Locked</div>
             </div>
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <div className="text-3xl mb-2">🔥</div>
-              <h3 className="font-semibold text-gray-900 mb-1">On Fire</h3>
-              <p className="text-sm text-gray-600">Win 5 battles in a row</p>
-              <div className="mt-2 text-xs text-gray-500">Locked</div>
+            <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-6 border-2 border-orange-100 hover:border-orange-300 transition-all transform hover:scale-105">
+              <div className="text-5xl mb-3">🔥</div>
+              <h3 className="font-bold text-gray-900 mb-2 text-lg">On Fire</h3>
+              <p className="text-sm text-gray-600 mb-3">Win 5 battles in a row</p>
+              <div className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-semibold inline-block">Locked</div>
             </div>
           </div>
         </div>

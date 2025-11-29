@@ -120,22 +120,40 @@ export default function ChallengesPage() {
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Hero Section */}
+        <div className="mb-8">
+          <div className="bg-gradient-to-r from-primary-600 to-blue-700 rounded-2xl p-8 text-white shadow-xl mb-6">
+            <h1 className="text-4xl font-bold mb-3">Choose Your Challenge 🚀</h1>
+            <p className="text-blue-100 text-lg">Select a programming language and start solving challenges</p>
+          </div>
+        </div>
+
         {/* Language Selection */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Select Programming Language</h1>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+            <span className="bg-primary-100 rounded-lg p-2 mr-3">
+              <Code className="h-6 w-6 text-primary-600" />
+            </span>
+            Programming Languages
+          </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
             {languages.map((lang) => (
               <button
                 key={lang.id}
                 onClick={() => setSelectedLanguage(lang.id)}
-                className={`p-4 rounded-xl border-2 transition-all transform hover:scale-105 ${
+                className={`group relative p-6 rounded-2xl border-2 transition-all transform hover:scale-105 ${
                   selectedLanguage === lang.id
-                    ? `bg-gradient-to-r ${lang.color} border-transparent text-white shadow-lg`
-                    : 'bg-white border-gray-200 text-gray-700 hover:border-primary-300 hover:shadow-md'
+                    ? `bg-gradient-to-r ${lang.color} border-transparent text-white shadow-xl`
+                    : 'bg-white border-gray-200 text-gray-700 hover:border-primary-400 hover:shadow-lg'
                 }`}
               >
-                <div className="text-3xl mb-2">{lang.icon}</div>
-                <div className="font-semibold">{lang.name}</div>
+                <div className="text-4xl mb-3 transform group-hover:scale-110 transition-transform">{lang.icon}</div>
+                <div className="font-bold text-lg">{lang.name}</div>
+                {selectedLanguage === lang.id && (
+                  <div className="absolute top-2 right-2">
+                    <CheckCircle className="h-5 w-5 text-white" />
+                  </div>
+                )}
               </button>
             ))}
           </div>
@@ -143,34 +161,46 @@ export default function ChallengesPage() {
 
         {/* Stats */}
         {stats && (
-          <div className="grid md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between">
-                <Code className="h-8 w-8 text-primary-600" />
-                <span className="text-2xl font-bold text-gray-900">{stats.totalChallenges || 0}</span>
+          <div className="grid md:grid-cols-4 gap-6 mb-8">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border-2 border-blue-200 shadow-lg p-6 hover:shadow-xl transition-all transform hover:scale-105">
+              <div className="flex items-center justify-between mb-3">
+                <div className="bg-primary-600 rounded-lg p-3">
+                  <Code className="h-6 w-6 text-white" />
+                </div>
+                <span className="text-3xl font-bold text-gray-900">{stats.totalChallenges || 0}</span>
               </div>
-              <p className="text-gray-600 text-sm mt-2">Total Challenges</p>
+              <p className="text-gray-700 font-semibold">Total Challenges</p>
+              <p className="text-xs text-gray-600 mt-1">Available to solve</p>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between">
-                <CheckCircle className="h-8 w-8 text-green-500" />
-                <span className="text-2xl font-bold text-gray-900">{stats.completed || 0}</span>
+            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl border-2 border-green-200 shadow-lg p-6 hover:shadow-xl transition-all transform hover:scale-105">
+              <div className="flex items-center justify-between mb-3">
+                <div className="bg-green-500 rounded-lg p-3">
+                  <CheckCircle className="h-6 w-6 text-white" />
+                </div>
+                <span className="text-3xl font-bold text-gray-900">{stats.completed || 0}</span>
               </div>
-              <p className="text-gray-600 text-sm mt-2">Completed</p>
+              <p className="text-gray-700 font-semibold">Completed</p>
+              <p className="text-xs text-gray-600 mt-1">Great progress!</p>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between">
-                <Users className="h-8 w-8 text-blue-500" />
-                <span className="text-2xl font-bold text-gray-900">{stats.participants || 0}</span>
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border-2 border-purple-200 shadow-lg p-6 hover:shadow-xl transition-all transform hover:scale-105">
+              <div className="flex items-center justify-between mb-3">
+                <div className="bg-purple-500 rounded-lg p-3">
+                  <Users className="h-6 w-6 text-white" />
+                </div>
+                <span className="text-3xl font-bold text-gray-900">{stats.participants || 0}</span>
               </div>
-              <p className="text-gray-600 text-sm mt-2">Participants</p>
+              <p className="text-gray-700 font-semibold">Participants</p>
+              <p className="text-xs text-gray-600 mt-1">Join the community</p>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between">
-                <Trophy className="h-8 w-8 text-yellow-500" />
-                <span className="text-2xl font-bold text-gray-900">{stats.points || 0}</span>
+            <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl border-2 border-amber-200 shadow-lg p-6 hover:shadow-xl transition-all transform hover:scale-105">
+              <div className="flex items-center justify-between mb-3">
+                <div className="bg-yellow-500 rounded-lg p-3">
+                  <Trophy className="h-6 w-6 text-white" />
+                </div>
+                <span className="text-3xl font-bold text-gray-900">{stats.points || 0}</span>
               </div>
-              <p className="text-gray-600 text-sm mt-2">Points Earned</p>
+              <p className="text-gray-700 font-semibold">Points Earned</p>
+              <p className="text-xs text-gray-600 mt-1">Keep earning!</p>
             </div>
           </div>
         )}
@@ -212,47 +242,56 @@ export default function ChallengesPage() {
               </div>
             </div>
           ) : (
-            <div className="grid gap-4">
+            <div className="grid gap-6">
               {challenges.map((challenge) => (
                 <Link
                   key={challenge.id}
                   href={`/challenges/${challenge.language}/${challenge.challengeNumber}`}
-                  className="bg-white rounded-xl border border-gray-200 p-6 hover:border-primary-500 hover:shadow-md transition-all transform hover:scale-[1.01]"
+                  className="group bg-white rounded-2xl border-2 border-gray-200 p-6 hover:border-primary-400 hover:shadow-xl transition-all transform hover:scale-[1.02] shadow-lg"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <span className="text-2xl font-bold text-primary-600">
-                          #{challenge.challengeNumber}
-                        </span>
-                        <h3 className="text-xl font-semibold text-gray-900">{challenge.title}</h3>
-                        <span className={`px-2 py-1 rounded text-xs font-medium border ${getDifficultyColor(challenge.difficulty)}`}>
-                          {challenge.difficulty}
+                      <div className="flex items-center space-x-3 mb-3">
+                        <div className="bg-primary-100 rounded-xl px-4 py-2">
+                          <span className="text-xl font-bold text-primary-600">
+                            #{challenge.challengeNumber}
+                          </span>
+                        </div>
+                        <h3 className="text-2xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors">{challenge.title}</h3>
+                        <span className={`px-3 py-1 rounded-lg text-xs font-bold border-2 ${getDifficultyColor(challenge.difficulty)}`}>
+                          {challenge.difficulty.toUpperCase()}
                         </span>
                       </div>
-                      <p className="text-gray-600 mb-4 line-clamp-2">{challenge.description}</p>
-                      <div className="flex items-center space-x-6 text-sm">
-                        <div className="flex items-center space-x-2">
-                          <Trophy className="h-4 w-4 text-yellow-500" />
-                          <span className="text-gray-700">{challenge.points} points</span>
+                      <p className="text-gray-600 mb-5 line-clamp-2 text-lg">{challenge.description}</p>
+                      <div className="flex items-center space-x-8 text-sm">
+                        <div className="flex items-center space-x-2 bg-yellow-50 px-3 py-2 rounded-lg">
+                          <Trophy className="h-5 w-5 text-yellow-600" />
+                          <span className="text-gray-900 font-semibold">{challenge.points} points</span>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <Users className="h-4 w-4 text-blue-500" />
-                          <span className="text-gray-700">{challenge.participants?.length || 0} participants</span>
+                        <div className="flex items-center space-x-2 bg-blue-50 px-3 py-2 rounded-lg">
+                          <Users className="h-5 w-5 text-blue-600" />
+                          <span className="text-gray-900 font-semibold">{challenge.participants?.length || 0} participants</span>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                          <span className="text-gray-700">{challenge.successfulSubmissions || 0} solved</span>
+                        <div className="flex items-center space-x-2 bg-green-50 px-3 py-2 rounded-lg">
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                          <span className="text-gray-900 font-semibold">{challenge.successfulSubmissions || 0} solved</span>
                         </div>
                       </div>
                     </div>
-                    <div className="ml-4">
+                    <div className="ml-4 flex flex-col items-center">
                       {challenge.userStatus === 'completed' && (
-                        <CheckCircle className="h-8 w-8 text-green-500" />
+                        <div className="bg-green-100 rounded-full p-3 mb-2">
+                          <CheckCircle className="h-8 w-8 text-green-600" />
+                        </div>
                       )}
                       {challenge.userStatus === 'attempted' && (
-                        <Clock className="h-8 w-8 text-yellow-500" />
+                        <div className="bg-yellow-100 rounded-full p-3 mb-2">
+                          <Clock className="h-8 w-8 text-yellow-600" />
+                        </div>
                       )}
+                      <span className="text-xs text-gray-500 font-medium group-hover:text-primary-600 transition-colors">
+                        {challenge.userStatus === 'completed' ? 'Solved' : challenge.userStatus === 'attempted' ? 'In Progress' : 'Start →'}
+                      </span>
                     </div>
                   </div>
                 </Link>

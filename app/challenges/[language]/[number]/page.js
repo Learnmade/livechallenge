@@ -240,9 +240,9 @@ export default function ChallengePage() {
               <CodeEditor
                 language={language}
                 value={code}
-                onChange={setCode}
-                theme="vs-dark"
+                onChange={(value) => setCode(value || '')}
                 height="500px"
+                showThemeToggle={true}
               />
               <div className="bg-gray-50 px-4 py-3 border-t border-gray-200 flex items-center space-x-3">
                 <button
