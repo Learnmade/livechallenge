@@ -31,15 +31,25 @@ export default function ChallengePage() {
   const fetchChallenge = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/challenges/${language}/${number}`)
+      const response = await fetch(`/api/challenges/${language}/${number}`, {
+        credentials: 'include',
+      })
       if (response.ok) {
         const data = await response.json()
         setChallenge(data.challenge)
-        setCode(data.challenge?.starterCode || '')
+        if (data.challenge?.starterCode) {
+          setCode(data.challenge.starterCode)
+        } else {
+          setCode('')
+        }
+      } else {
+        const errorData = await response.json()
+        console.error('Error fetching challenge:', errorData)
+        toast.error(errorData.error || 'Failed to load challenge')
       }
     } catch (error) {
       console.error('Error fetching challenge:', error)
-      toast.error('Failed to load challenge')
+      toast.error('Failed to load challenge due to network error')
     } finally {
       setLoading(false)
     }
@@ -240,7 +250,11 @@ export default function ChallengePage() {
               <CodeEditor
                 language={language}
                 value={code}
-                onChange={(value) => setCode(value || '')}
+                onChange={(value) => {
+                  if (value !== undefined && value !== null) {
+                    setCode(value)
+                  }
+                }}
                 height="500px"
                 showThemeToggle={true}
               />
