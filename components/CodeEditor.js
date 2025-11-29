@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
-import { Moon, Sun, Loader2, Maximize2, Minimize2, Settings, FileCode } from 'lucide-react'
+import { Moon, Sun, Loader2, Maximize2, Minimize2, Settings, FileCode, X, Circle } from 'lucide-react'
 
 // Configure Monaco Editor workers - use simpler approach
 if (typeof window !== 'undefined') {
@@ -71,39 +71,115 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
     
     editorRef.current = editor
     
-    // Configure editor options
+    // Define VS Code-like theme colors
+    if (monaco && theme === 'vs-dark') {
+      monaco.editor.defineTheme('vs-code-dark', {
+        base: 'vs-dark',
+        inherit: true,
+        rules: [
+          { token: 'comment', foreground: '6A9955', fontStyle: 'italic' },
+          { token: 'keyword', foreground: '569CD6' },
+          { token: 'string', foreground: 'CE9178' },
+          { token: 'number', foreground: 'B5CEA8' },
+          { token: 'type', foreground: '4EC9B0' },
+          { token: 'function', foreground: 'DCDCAA' },
+        ],
+        colors: {
+          'editor.background': '#1e1e1e',
+          'editor.foreground': '#d4d4d4',
+          'editorLineNumber.foreground': '#858585',
+          'editorLineNumber.activeForeground': '#c6c6c6',
+          'editor.selectionBackground': '#264f78',
+          'editor.lineHighlightBackground': '#2a2d2e',
+          'editorCursor.foreground': '#aeafad',
+          'editorWhitespace.foreground': '#3b3a32',
+          'editorIndentGuide.background': '#404040',
+          'editorIndentGuide.activeBackground': '#707070',
+        },
+      })
+      monaco.editor.setTheme('vs-code-dark')
+    }
+    
+    // Configure editor options with VS Code-like settings
     editor.updateOptions({
       fontSize: fontSize,
-      minimap: { enabled: minimap },
+      fontFamily: "'Cascadia Code', 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace",
+      fontLigatures: true,
+      minimap: { 
+        enabled: minimap,
+        side: 'right',
+        size: 'proportional',
+        showSlider: 'always',
+      },
       scrollBeyondLastLine: false,
       automaticLayout: true,
       tabSize: 2,
       insertSpaces: true,
       wordWrap: wordWrap ? 'on' : 'off',
       lineNumbers: 'on',
+      lineNumbersMinChars: 3,
       roundedSelection: false,
       cursorStyle: 'line',
       cursorBlinking: 'smooth',
+      cursorSmoothCaretAnimation: 'on',
       readOnly: readOnly,
       contextmenu: !readOnly,
       selectOnLineNumbers: true,
       glyphMargin: true,
       folding: true,
+      foldingStrategy: 'indentation',
+      showFoldingControls: 'always',
+      unfoldOnClickAfterEndOfLine: false,
       lineDecorationsWidth: 10,
-      lineNumbersMinChars: 3,
       acceptSuggestionOnEnter: 'on',
-      quickSuggestions: true,
+      quickSuggestions: {
+        other: true,
+        comments: false,
+        strings: false,
+      },
       suggestOnTriggerCharacters: true,
+      suggestSelection: 'first',
+      tabCompletion: 'on',
+      wordBasedSuggestions: 'matchingDocuments',
       scrollbar: {
         vertical: 'auto',
         horizontal: 'auto',
         useShadows: true,
         verticalScrollbarSize: 14,
         horizontalScrollbarSize: 14,
+        arrowSize: 11,
+        alwaysConsumeMouseWheel: false,
       },
       renderWhitespace: 'selection',
       renderLineHighlight: 'all',
+      renderIndentGuides: true,
+      highlightActiveIndentGuide: true,
       matchBrackets: 'always',
+      bracketPairColorization: {
+        enabled: true,
+      },
+      guides: {
+        bracketPairs: true,
+        indentation: true,
+        highlightActiveIndentation: true,
+      },
+      colorDecorators: true,
+      multiCursorModifier: 'ctrlCmd',
+      formatOnPaste: true,
+      formatOnType: true,
+      autoIndent: 'full',
+      detectIndentation: false,
+      trimAutoWhitespace: true,
+      dragAndDrop: true,
+      links: true,
+      colorDecoratorsLimit: 500,
+      overviewRulerBorder: false,
+      hideCursorInOverviewRuler: true,
+      overviewRulerLanes: 0,
+      smoothScrolling: true,
+      mouseWheelZoom: false,
+      disableLayerHinting: false,
+      disableMonospaceOptimizations: false,
     })
 
     // Add keyboard shortcuts
@@ -164,102 +240,116 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
 
   return (
     <div 
-      className={`w-full relative ${isDark ? 'bg-[#1e1e1e]' : 'bg-white'} border ${isDark ? 'border-gray-700' : 'border-gray-200'} rounded-lg overflow-hidden shadow-xl`}
+      className={`w-full relative ${isDark ? 'bg-[#1e1e1e]' : 'bg-white'} border ${isDark ? 'border-[#3e3e42]' : 'border-gray-200'} rounded-lg overflow-hidden shadow-2xl`}
       style={{ height: isFullscreen ? '100vh' : height }}
     >
       {/* VS Code-like Title Bar */}
-      <div className={`flex items-center justify-between px-3 sm:px-4 py-2 ${isDark ? 'bg-[#2d2d30] border-b border-gray-700' : 'bg-[#f3f3f3] border-b border-gray-200'}`}>
+      <div className={`flex items-center justify-between px-3 sm:px-4 py-2.5 ${isDark ? 'bg-[#2d2d30] border-b border-[#3e3e42]' : 'bg-[#f3f3f3] border-b border-gray-200'}`}>
         <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
-          <div className="flex items-center space-x-1.5 sm:space-x-2 min-w-0">
-            <FileCode className={`h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
-            <span className={`text-xs sm:text-sm font-medium truncate ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-              {fileName}.{languageMap[language] || 'js'}
-            </span>
-          </div>
-          <div className={`text-xs px-1.5 sm:px-2 py-0.5 rounded flex-shrink-0 ${isDark ? 'bg-[#1e1e1e] text-gray-400' : 'bg-gray-200 text-gray-600'}`}>
-            <span className="hidden sm:inline">{languageMap[language]?.toUpperCase() || 'JAVASCRIPT'}</span>
-            <span className="sm:hidden">{languageMap[language]?.toUpperCase().slice(0, 3) || 'JS'}</span>
+          <div className="flex items-center space-x-2 min-w-0 group">
+            <div className={`flex items-center space-x-1.5 sm:space-x-2 px-2 py-1 rounded ${isDark ? 'bg-[#1e1e1e] hover:bg-[#252526]' : 'bg-white hover:bg-gray-50'} transition-colors cursor-default`}>
+              <FileCode className={`h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0 ${isDark ? 'text-[#858585]' : 'text-gray-500'}`} />
+              <span className={`text-xs sm:text-sm font-medium truncate ${isDark ? 'text-[#cccccc]' : 'text-gray-800'}`}>
+                {fileName}.{languageMap[language] || 'js'}
+              </span>
+            </div>
+            <div className={`text-[10px] sm:text-xs px-2 py-0.5 rounded font-semibold flex-shrink-0 ${isDark ? 'bg-[#1e1e1e] text-[#858585] border border-[#3e3e42]' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>
+              <span className="hidden sm:inline">{languageMap[language]?.toUpperCase() || 'JAVASCRIPT'}</span>
+              <span className="sm:hidden">{languageMap[language]?.toUpperCase().slice(0, 3) || 'JS'}</span>
+            </div>
           </div>
         </div>
         
-        <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+        <div className="flex items-center space-x-0.5 sm:space-x-1 flex-shrink-0">
           {showThemeToggle && !readOnly && (
             <button
               type="button"
               onClick={toggleTheme}
-              className={`p-1 sm:p-1.5 rounded hover:bg-opacity-20 ${isDark ? 'hover:bg-white text-gray-400 hover:text-white' : 'hover:bg-gray-800 text-gray-600 hover:text-gray-900'} transition-colors`}
-              title={isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+              className={`p-1.5 sm:p-2 rounded-md transition-all ${isDark ? 'hover:bg-[#3e3e42] text-[#cccccc] hover:text-white' : 'hover:bg-gray-200 text-gray-600 hover:text-gray-900'}`}
+              title={isDark ? 'Switch to Light Theme (Ctrl+K Ctrl+T)' : 'Switch to Dark Theme (Ctrl+K Ctrl+T)'}
             >
-              {isDark ? <Sun className="h-3 w-3 sm:h-4 sm:w-4" /> : <Moon className="h-3 w-3 sm:h-4 sm:w-4" />}
+              {isDark ? <Sun className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <Moon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
             </button>
           )}
           <button
             type="button"
             onClick={() => setShowSettings(!showSettings)}
-            className={`p-1 sm:p-1.5 rounded hover:bg-opacity-20 ${isDark ? 'hover:bg-white text-gray-400 hover:text-white' : 'hover:bg-gray-800 text-gray-600 hover:text-gray-900'} transition-colors`}
+            className={`p-1.5 sm:p-2 rounded-md transition-all ${isDark ? 'hover:bg-[#3e3e42] text-[#cccccc] hover:text-white' : 'hover:bg-gray-200 text-gray-600 hover:text-gray-900'}`}
             title="Editor Settings"
           >
-            <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
+            <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </button>
           <button
             type="button"
             onClick={toggleFullscreen}
-            className={`p-1 sm:p-1.5 rounded hover:bg-opacity-20 ${isDark ? 'hover:bg-white text-gray-400 hover:text-white' : 'hover:bg-gray-800 text-gray-600 hover:text-gray-900'} transition-colors`}
-            title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+            className={`p-1.5 sm:p-2 rounded-md transition-all ${isDark ? 'hover:bg-[#3e3e42] text-[#cccccc] hover:text-white' : 'hover:bg-gray-200 text-gray-600 hover:text-gray-900'}`}
+            title={isFullscreen ? 'Exit Fullscreen (F11)' : 'Enter Fullscreen (F11)'}
           >
-            {isFullscreen ? <Minimize2 className="h-3 w-3 sm:h-4 sm:w-4" /> : <Maximize2 className="h-3 w-3 sm:h-4 sm:w-4" />}
+            {isFullscreen ? <Minimize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <Maximize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
           </button>
         </div>
       </div>
 
       {/* Settings Panel */}
       {showSettings && (
-        <div className={`absolute top-10 right-2 z-30 ${isDark ? 'bg-[#252526] border-gray-700' : 'bg-white border-gray-200'} border rounded-lg shadow-2xl p-3 sm:p-4 min-w-[180px] sm:min-w-[200px]`}>
-          <div className="space-y-3">
+        <div className={`absolute top-12 right-2 z-30 ${isDark ? 'bg-[#252526] border-[#3e3e42]' : 'bg-white border-gray-200'} border rounded-md shadow-2xl p-4 min-w-[220px] sm:min-w-[240px]`}>
+          <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-700">
+            <h3 className={`text-sm font-semibold ${isDark ? 'text-[#cccccc]' : 'text-gray-800'}`}>Editor Settings</h3>
+            <button
+              onClick={() => setShowSettings(false)}
+              className={`p-1 rounded hover:bg-opacity-20 ${isDark ? 'hover:bg-white text-gray-400 hover:text-white' : 'hover:bg-gray-200 text-gray-600'}`}
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <div className="space-y-4">
             <div>
-              <label className={`text-xs font-medium block mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                Font Size: {fontSize}px
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className={`text-xs font-medium ${isDark ? 'text-[#cccccc]' : 'text-gray-700'}`}>
+                  Font Size
+                </label>
+                <span className={`text-xs font-mono ${isDark ? 'text-[#858585]' : 'text-gray-500'}`}>{fontSize}px</span>
+              </div>
               <input
                 type="range"
                 min="10"
                 max="24"
                 value={fontSize}
                 onChange={(e) => setFontSize(Number(e.target.value))}
-                className="w-full"
+                className="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#007acc]"
               />
             </div>
             <div className="flex items-center justify-between">
-              <label className={`text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              <label className={`text-xs font-medium ${isDark ? 'text-[#cccccc]' : 'text-gray-700'}`}>
                 Word Wrap
               </label>
               <button
                 type="button"
                 onClick={() => setWordWrap(!wordWrap)}
                 className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                  wordWrap ? (isDark ? 'bg-[#007acc]' : 'bg-primary-600') : (isDark ? 'bg-gray-600' : 'bg-gray-300')
+                  wordWrap ? (isDark ? 'bg-[#007acc]' : 'bg-primary-600') : (isDark ? 'bg-[#3e3e42]' : 'bg-gray-300')
                 }`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform shadow-sm ${
                     wordWrap ? 'translate-x-5' : 'translate-x-1'
                   }`}
                 />
               </button>
             </div>
             <div className="flex items-center justify-between">
-              <label className={`text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              <label className={`text-xs font-medium ${isDark ? 'text-[#cccccc]' : 'text-gray-700'}`}>
                 Minimap
               </label>
               <button
                 type="button"
                 onClick={() => setMinimap(!minimap)}
                 className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                  minimap ? (isDark ? 'bg-[#007acc]' : 'bg-primary-600') : (isDark ? 'bg-gray-600' : 'bg-gray-300')
+                  minimap ? (isDark ? 'bg-[#007acc]' : 'bg-primary-600') : (isDark ? 'bg-[#3e3e42]' : 'bg-gray-300')
                 }`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform shadow-sm ${
                     minimap ? 'translate-x-5' : 'translate-x-1'
                   }`}
                 />
@@ -288,50 +378,106 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
           }
           options={{
             fontSize: fontSize,
-            minimap: { enabled: minimap },
+            fontFamily: "'Cascadia Code', 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace",
+            fontLigatures: true,
+            minimap: { 
+              enabled: minimap,
+              side: 'right',
+              size: 'proportional',
+              showSlider: 'always',
+            },
             scrollBeyondLastLine: false,
             automaticLayout: true,
             tabSize: 2,
             insertSpaces: true,
             wordWrap: wordWrap ? 'on' : 'off',
             lineNumbers: 'on',
+            lineNumbersMinChars: 3,
             roundedSelection: false,
             cursorStyle: 'line',
             cursorBlinking: 'smooth',
+            cursorSmoothCaretAnimation: 'on',
             readOnly: readOnly,
             contextmenu: !readOnly,
             selectOnLineNumbers: true,
             glyphMargin: true,
             folding: true,
+            foldingStrategy: 'indentation',
+            showFoldingControls: 'always',
+            unfoldOnClickAfterEndOfLine: false,
             lineDecorationsWidth: 10,
-            lineNumbersMinChars: 3,
             acceptSuggestionOnEnter: 'on',
-            quickSuggestions: true,
+            quickSuggestions: {
+              other: true,
+              comments: false,
+              strings: false,
+            },
             suggestOnTriggerCharacters: true,
+            suggestSelection: 'first',
+            tabCompletion: 'on',
+            wordBasedSuggestions: 'matchingDocuments',
             scrollbar: {
               vertical: 'auto',
               horizontal: 'auto',
               useShadows: true,
               verticalScrollbarSize: 14,
               horizontalScrollbarSize: 14,
+              arrowSize: 11,
+              alwaysConsumeMouseWheel: false,
             },
             renderWhitespace: 'selection',
             renderLineHighlight: 'all',
+            renderIndentGuides: true,
+            highlightActiveIndentGuide: true,
             matchBrackets: 'always',
+            bracketPairColorization: {
+              enabled: true,
+            },
+            guides: {
+              bracketPairs: true,
+              indentation: true,
+              highlightActiveIndentation: true,
+            },
+            colorDecorators: true,
+            multiCursorModifier: 'ctrlCmd',
+            formatOnPaste: true,
+            formatOnType: true,
+            autoIndent: 'full',
+            detectIndentation: false,
+            trimAutoWhitespace: true,
+            dragAndDrop: true,
+            links: true,
+            colorDecoratorsLimit: 500,
+            overviewRulerBorder: false,
+            hideCursorInOverviewRuler: true,
+            overviewRulerLanes: 0,
+            smoothScrolling: true,
+            mouseWheelZoom: false,
+            disableLayerHinting: false,
+            disableMonospaceOptimizations: false,
           }}
         />
       </div>
 
-      {/* Status Bar */}
-      <div className={`flex items-center justify-between px-2 sm:px-4 py-1 text-xs ${isDark ? 'bg-[#007acc] text-white' : 'bg-[#f3f3f3] text-gray-700'} border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-        <div className="flex items-center space-x-2 sm:space-x-4 min-w-0">
-          <span className="font-medium truncate">{languageMap[language]?.toUpperCase() || 'JAVASCRIPT'}</span>
-          <span className="hidden sm:inline">Spaces: 2</span>
-          <span className="hidden md:inline">UTF-8</span>
+      {/* VS Code-like Status Bar */}
+      <div className={`flex items-center justify-between px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs ${isDark ? 'bg-[#007acc] text-white' : 'bg-[#0078d4] text-white'} border-t ${isDark ? 'border-[#005a9e]' : 'border-[#005a9e]'}`}>
+        <div className="flex items-center space-x-3 sm:space-x-4 min-w-0">
+          <div className="flex items-center space-x-1.5">
+            <Circle className="h-2 w-2 fill-current" />
+            <span className="font-medium truncate">{languageMap[language]?.toUpperCase() || 'JAVASCRIPT'}</span>
+          </div>
+          <span className="hidden sm:inline opacity-90">Spaces: 2</span>
+          <span className="hidden md:inline opacity-90">UTF-8</span>
+          <span className="hidden lg:inline opacity-90">LF</span>
         </div>
-        <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-          {value && <span className="hidden sm:inline">{value.split('\n').length} lines</span>}
-          <span>{value ? value.length : 0} chars</span>
+        <div className="flex items-center space-x-3 sm:space-x-4 flex-shrink-0">
+          {value && (
+            <>
+              <span className="hidden sm:inline opacity-90">Ln {value.split('\n').length}, Col {value.split('\n').pop().length + 1}</span>
+              <span className="hidden md:inline opacity-90">{value.split('\n').length} lines</span>
+            </>
+          )}
+          <span className="opacity-90">{value ? value.length : 0} chars</span>
         </div>
       </div>
     </div>
