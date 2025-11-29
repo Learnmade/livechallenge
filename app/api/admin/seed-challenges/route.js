@@ -285,18 +285,27 @@ export async function POST(request) {
   const created = []
 
   try {
+    console.log('🌱 Starting challenge seeding process...')
+    
+    // Authenticate user
     const user = await requireHost(request)
+    console.log('✅ User authenticated:', user.email)
+    
+    // Connect to database
     await connectDB()
+    console.log('✅ Database connected')
 
     // Get count before deletion
     const existingCount = await Challenge.countDocuments({})
+    console.log(`📊 Found ${existingCount} existing challenges`)
     
     // Clear existing challenges
     const deleteResult = await Challenge.deleteMany({})
     console.log(`🗑️  Deleted ${deleteResult.deletedCount} existing challenges`)
 
     const languages = Object.keys(challengeTemplates)
-    const existingSlugs = new Set() // Track slugs across all languages to ensure uniqueness
+    console.log(`📝 Processing ${languages.length} languages: ${languages.join(', ')}`)
+    const existingSlugs = new Set()
 
     // Process each language
     for (const language of languages) {
@@ -304,18 +313,24 @@ export async function POST(request) {
       let languageCreated = 0
       let languageErrors = 0
       
+      console.log(`\n🔹 Processing ${language} (${templates.length} challenges)...`)
+      
       for (let i = 0; i < templates.length; i++) {
         try {
           const template = templates[i]
           const challengeNumber = i + 1
+          
+          // Generate slug
           const baseSlug = generateSlug(template.title)
+          if (!baseSlug || baseSlug.trim() === '') {
+            throw new Error(`Failed to generate slug for "${template.title}"`)
+          }
           
           // Ensure slug is unique for this language
           let slug = baseSlug
           let counter = 1
           const languageSlugKey = `${language}:${slug}`
           
-          // Check if this slug already exists for this language
           while (existingSlugs.has(languageSlugKey)) {
             slug = `${baseSlug}-${counter}`
             const newKey = `${language}:${slug}`
@@ -328,7 +343,7 @@ export async function POST(request) {
 
           // Validate required fields
           if (!template.title || !template.difficulty || !template.points) {
-            throw new Error(`Missing required fields for ${language} challenge ${challengeNumber}`)
+            throw new Error(`Missing required fields: title=${!!template.title}, difficulty=${!!template.difficulty}, points=${!!template.points}`)
           }
 
           // Get challenge data
@@ -340,18 +355,12 @@ export async function POST(request) {
           // Validate test cases
           if (!testCases || testCases.length === 0) {
             console.warn(`⚠️  Warning: No test cases for ${language} challenge "${template.title}"`)
-            // Don't fail, but log it
-          }
-
-          // Validate slug is not empty
-          if (!slug || slug.trim() === '') {
-            throw new Error(`Generated slug is empty for "${template.title}"`)
           }
 
           // Prepare challenge data
           const challengeData = {
-            title: template.title,
-            description: description,
+            title: template.title.trim(),
+            description: description.trim(),
             difficulty: template.difficulty,
             language: language,
             challengeNumber: challengeNumber,
@@ -364,9 +373,9 @@ export async function POST(request) {
             isActive: true,
           }
 
-          // Log challenge data for debugging (first challenge only)
-          if (totalCreated === 0 && i === 0) {
-            console.log('📝 Sample challenge data:', JSON.stringify(challengeData, null, 2))
+          // Validate all required fields are present
+          if (!challengeData.title || !challengeData.description || !challengeData.slug) {
+            throw new Error(`Invalid challenge data: title=${!!challengeData.title}, description=${!!challengeData.description}, slug=${!!challengeData.slug}`)
           }
 
           // Create challenge
@@ -381,30 +390,30 @@ export async function POST(request) {
             slug: slug,
           })
 
-          console.log(`✅ Created ${language} challenge ${challengeNumber}: ${template.title} (slug: ${slug})`)
+          console.log(`  ✅ Created ${language} challenge ${challengeNumber}: ${template.title} (slug: ${slug})`)
         } catch (error) {
           totalErrors++
           languageErrors++
           const errorMsg = `${language} challenge ${i + 1} (${templates[i]?.title || 'Unknown'}): ${error.message}`
           errors.push(errorMsg)
-          console.error(`❌ Error creating ${errorMsg}`)
-          console.error('Error details:', {
-            name: error.name,
-            message: error.message,
-            stack: error.stack,
-            code: error.code,
-            keyPattern: error.keyPattern,
-            keyValue: error.keyValue,
-          })
+          console.error(`  ❌ Error: ${errorMsg}`)
           
-          // If it's a validation error, log the validation errors
+          // Detailed error logging
           if (error.name === 'ValidationError') {
-            console.error('Validation errors:', error.errors)
+            console.error('    Validation errors:', JSON.stringify(error.errors, null, 2))
+          } else if (error.code === 11000) {
+            console.error('    Duplicate key error:', error.keyPattern, error.keyValue)
+          } else {
+            console.error('    Error details:', {
+              name: error.name,
+              message: error.message,
+              code: error.code,
+            })
           }
         }
       }
 
-      console.log(`📊 ${language}: ${languageCreated} created, ${languageErrors} errors`)
+      console.log(`  📊 ${language}: ${languageCreated} created, ${languageErrors} errors`)
     }
 
     // Verify challenges were actually created in database
@@ -425,30 +434,37 @@ export async function POST(request) {
       duration: `${(duration / 1000).toFixed(2)}s`,
       deleted: deleteResult.deletedCount,
       countByLanguage,
-      created: created.slice(0, 10), // Show first 10 created challenges
-      errors: errors.slice(0, 10), // Show first 10 errors
+      created: created.slice(0, 10),
+      errors: errors.slice(0, 20),
     }
 
     // Log verification
-    console.log(`📊 Verification: Created ${totalCreated}, DB has ${actualCount} challenges`)
+    console.log(`\n📊 Verification:`)
+    console.log(`  Created: ${totalCreated}`)
+    console.log(`  DB Count: ${actualCount}`)
+    console.log(`  Errors: ${totalErrors}`)
+    console.log(`  Duration: ${summary.duration}`)
+    
     if (actualCount !== totalCreated) {
       console.warn(`⚠️  Warning: Mismatch between created count (${totalCreated}) and DB count (${actualCount})`)
     }
 
     if (totalErrors > 0) {
-      console.warn(`⚠️  Seeding completed with ${totalErrors} errors`)
+      console.warn(`\n⚠️  Seeding completed with ${totalErrors} errors`)
       return NextResponse.json({
         message: `Seeding completed with ${totalErrors} errors. ${totalCreated} challenges created successfully.`,
         ...summary,
-      }, { status: 207 }) // 207 Multi-Status
+      }, { status: 207 })
     }
 
-    console.log(`🎉 Successfully created ${totalCreated} challenges in ${summary.duration}`)
+    console.log(`\n🎉 Successfully created ${totalCreated} challenges in ${summary.duration}`)
     return NextResponse.json({
       message: `Successfully created ${totalCreated} challenges across ${languages.length} languages!`,
       ...summary,
     }, { status: 200 })
   } catch (error) {
+    console.error('\n❌ Fatal error during seeding:', error)
+    
     if (error.message === 'Unauthorized' || error.message.includes('Forbidden') || error.message.includes('Host access required')) {
       return NextResponse.json(
         { 
@@ -460,7 +476,6 @@ export async function POST(request) {
       )
     }
     
-    console.error('❌ Seed challenges error:', error)
     return NextResponse.json(
       { 
         error: 'Internal server error',
@@ -477,4 +492,3 @@ export async function POST(request) {
     )
   }
 }
-
