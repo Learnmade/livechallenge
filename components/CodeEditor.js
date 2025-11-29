@@ -4,7 +4,29 @@ import { useRef, useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import { Moon, Sun, Loader2, Maximize2, Minimize2, Settings, FileCode } from 'lucide-react'
 
-// Dynamically import Monaco Editor to avoid SSR issues
+// Configure Monaco Editor workers - use simpler approach
+if (typeof window !== 'undefined') {
+  window.MonacoEnvironment = {
+    getWorkerUrl: function (moduleId, label) {
+      // Use CDN for workers as fallback
+      if (label === 'json') {
+        return 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/language/json/json.worker.js'
+      }
+      if (label === 'css' || label === 'scss' || label === 'less') {
+        return 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/language/css/css.worker.js'
+      }
+      if (label === 'html' || label === 'handlebars' || label === 'razor') {
+        return 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/language/html/html.worker.js'
+      }
+      if (label === 'typescript' || label === 'javascript') {
+        return 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/language/typescript/ts.worker.js'
+      }
+      return 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/editor/editor.worker.js'
+    }
+  }
+}
+
+// Dynamically import Monaco Editor
 const MonacoEditor = dynamic(
   () => import('@monaco-editor/react'),
   { 
@@ -19,13 +41,6 @@ const MonacoEditor = dynamic(
     )
   }
 )
-
-const VSCODE_THEMES = {
-  dark: 'vs-dark',
-  light: 'vs',
-  'dark-plus': 'vs-dark',
-  'light-plus': 'vs',
-}
 
 export default function CodeEditor({ language, value, onChange, theme: initialTheme = 'vs-dark', height = '500px', readOnly = false, showThemeToggle = true, fileName = 'solution' }) {
   const editorRef = useRef(null)
@@ -42,21 +57,21 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
   }, [])
 
   useEffect(() => {
-    if (editorRef.current) {
+    if (editorRef.current && isMounted) {
       editorRef.current.updateOptions({
         fontSize,
         wordWrap: wordWrap ? 'on' : 'off',
         minimap: { enabled: minimap },
       })
     }
-  }, [fontSize, wordWrap, minimap])
+  }, [fontSize, wordWrap, minimap, isMounted])
 
   const handleEditorDidMount = (editor, monaco) => {
     if (!editor) return
     
     editorRef.current = editor
     
-    // Configure editor options to match VS Code
+    // Configure editor options
     editor.updateOptions({
       fontSize: fontSize,
       minimap: { enabled: minimap },
@@ -69,55 +84,36 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
       roundedSelection: false,
       cursorStyle: 'line',
       cursorBlinking: 'smooth',
-      cursorSmoothCaretAnimation: 'on',
       readOnly: readOnly,
       contextmenu: !readOnly,
       selectOnLineNumbers: true,
       glyphMargin: true,
       folding: true,
-      foldingStrategy: 'auto',
-      showFoldingControls: 'always',
       lineDecorationsWidth: 10,
       lineNumbersMinChars: 3,
       acceptSuggestionOnEnter: 'on',
-      quickSuggestions: {
-        other: true,
-        comments: false,
-        strings: false,
-      },
+      quickSuggestions: true,
       suggestOnTriggerCharacters: true,
       scrollbar: {
         vertical: 'auto',
         horizontal: 'auto',
         useShadows: true,
-        verticalHasArrows: false,
-        horizontalHasArrows: false,
         verticalScrollbarSize: 14,
         horizontalScrollbarSize: 14,
       },
       renderWhitespace: 'selection',
       renderLineHighlight: 'all',
       matchBrackets: 'always',
-      colorDecorators: true,
-      bracketPairColorization: {
-        enabled: true,
-      },
     })
 
     // Add keyboard shortcuts
     if (monaco) {
       try {
-        // Ctrl/Cmd + Enter to submit
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
           const submitButton = document.querySelector('button[type="button"]')
           if (submitButton && !submitButton.disabled) {
             submitButton.click()
           }
-        })
-        
-        // Ctrl/Cmd + / for toggle comment
-        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Slash, () => {
-          editor.getAction('editor.action.commentLine').run()
         })
       } catch (error) {
         console.warn('Could not add keyboard shortcuts:', error)
@@ -134,10 +130,7 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
   const toggleTheme = (e) => {
     e.preventDefault()
     e.stopPropagation()
-    setTheme(prevTheme => {
-      const newTheme = prevTheme === 'vs-dark' ? 'vs' : 'vs-dark'
-      return newTheme
-    })
+    setTheme(prevTheme => prevTheme === 'vs-dark' ? 'vs' : 'vs-dark')
   }
 
   const toggleFullscreen = () => {
@@ -155,21 +148,8 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
     typescript: 'typescript',
   }
 
-  const getLanguageIcon = (lang) => {
-    const icons = {
-      javascript: '🟨',
-      python: '🐍',
-      java: '☕',
-      cpp: '⚡',
-      go: '🐹',
-      rust: '🦀',
-      csharp: '💜',
-      typescript: '🔷',
-    }
-    return icons[lang] || '📄'
-  }
-
   const isDark = theme === 'vs-dark'
+  const editorHeight = isFullscreen ? 'calc(100vh - 100px)' : `calc(${height} - 100px)`
 
   if (!isMounted) {
     return (
@@ -208,13 +188,8 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
               onClick={toggleTheme}
               className={`p-1.5 rounded hover:bg-opacity-20 ${isDark ? 'hover:bg-white text-gray-400 hover:text-white' : 'hover:bg-gray-800 text-gray-600 hover:text-gray-900'} transition-colors`}
               title={isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
-              aria-label="Toggle theme"
             >
-              {isDark ? (
-                <Sun className="h-4 w-4" />
-              ) : (
-                <Moon className="h-4 w-4" />
-              )}
+              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
           )}
           <button
@@ -222,7 +197,6 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
             onClick={() => setShowSettings(!showSettings)}
             className={`p-1.5 rounded hover:bg-opacity-20 ${isDark ? 'hover:bg-white text-gray-400 hover:text-white' : 'hover:bg-gray-800 text-gray-600 hover:text-gray-900'} transition-colors`}
             title="Editor Settings"
-            aria-label="Settings"
           >
             <Settings className="h-4 w-4" />
           </button>
@@ -231,13 +205,8 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
             onClick={toggleFullscreen}
             className={`p-1.5 rounded hover:bg-opacity-20 ${isDark ? 'hover:bg-white text-gray-400 hover:text-white' : 'hover:bg-gray-800 text-gray-600 hover:text-gray-900'} transition-colors`}
             title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-            aria-label="Toggle fullscreen"
           >
-            {isFullscreen ? (
-              <Minimize2 className="h-4 w-4" />
-            ) : (
-              <Maximize2 className="h-4 w-4" />
-            )}
+            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </button>
         </div>
       </div>
@@ -300,7 +269,7 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
       )}
 
       {/* Editor Container */}
-      <div className="w-full" style={{ height: isFullscreen ? 'calc(100vh - 40px)' : `calc(${height} - 40px)` }}>
+      <div className="w-full relative" style={{ height: editorHeight, minHeight: '300px' }}>
         <MonacoEditor
           height="100%"
           language={languageMap[language] || 'javascript'}
@@ -328,44 +297,31 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
             roundedSelection: false,
             cursorStyle: 'line',
             cursorBlinking: 'smooth',
-            cursorSmoothCaretAnimation: 'on',
             readOnly: readOnly,
             contextmenu: !readOnly,
             selectOnLineNumbers: true,
             glyphMargin: true,
             folding: true,
-            foldingStrategy: 'auto',
-            showFoldingControls: 'always',
             lineDecorationsWidth: 10,
             lineNumbersMinChars: 3,
             acceptSuggestionOnEnter: 'on',
-            quickSuggestions: {
-              other: true,
-              comments: false,
-              strings: false,
-            },
+            quickSuggestions: true,
             suggestOnTriggerCharacters: true,
             scrollbar: {
               vertical: 'auto',
               horizontal: 'auto',
               useShadows: true,
-              verticalHasArrows: false,
-              horizontalHasArrows: false,
               verticalScrollbarSize: 14,
               horizontalScrollbarSize: 14,
             },
             renderWhitespace: 'selection',
             renderLineHighlight: 'all',
             matchBrackets: 'always',
-            colorDecorators: true,
-            bracketPairColorization: {
-              enabled: true,
-            },
           }}
         />
       </div>
 
-      {/* Status Bar (VS Code-like) */}
+      {/* Status Bar */}
       <div className={`flex items-center justify-between px-4 py-1 text-xs ${isDark ? 'bg-[#007acc] text-white' : 'bg-[#f3f3f3] text-gray-700'} border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
         <div className="flex items-center space-x-4">
           <span className="font-medium">{languageMap[language]?.toUpperCase() || 'JAVASCRIPT'}</span>
@@ -373,13 +329,10 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
           <span>UTF-8</span>
         </div>
         <div className="flex items-center space-x-4">
-          {value && (
-            <span>{value.split('\n').length} lines</span>
-          )}
+          {value && <span>{value.split('\n').length} lines</span>}
           <span>{value ? value.length : 0} characters</span>
         </div>
       </div>
     </div>
   )
 }
-

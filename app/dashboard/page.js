@@ -116,6 +116,23 @@ export default function DashboardPage() {
           </Link>
 
           <Link
+            href="/leaderboard"
+            className="group bg-gradient-to-r from-yellow-50 to-amber-50 rounded-2xl border-2 border-yellow-200 p-8 hover:border-yellow-400 hover:shadow-xl transition-all shadow-lg"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="bg-yellow-100 rounded-xl p-4">
+                <Trophy className="h-8 w-8 text-yellow-600" />
+              </div>
+              <div className="text-4xl">🏆</div>
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-3">Leaderboard</h2>
+            <p className="text-gray-600 text-lg mb-4">See global rankings and compete with others</p>
+            <div className="flex items-center text-yellow-700 font-semibold">
+              <span>View Rankings</span>
+              <span className="ml-2 group-hover:translate-x-2 transition-transform">→</span>
+            </div>
+          </Link>
+          <Link
             href="/history"
             className="group bg-white rounded-2xl border-2 border-gray-200 p-8 hover:border-primary-400 hover:shadow-xl transition-all shadow-lg"
           >

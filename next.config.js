@@ -8,6 +8,8 @@ const nextConfig = {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
+        path: false,
+        crypto: false,
       }
     }
     return config
@@ -49,12 +51,12 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob:",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob: https://cdn.jsdelivr.net",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob:",
-              "font-src 'self' data:",
-              "connect-src 'self' ws: wss: https://challenge.learn-made.in blob:",
-              "worker-src 'self' blob:",
+              "font-src 'self' data: https:",
+              "connect-src 'self' ws: wss: https://challenge.learn-made.in https://cdn.jsdelivr.net blob:",
+              "worker-src 'self' blob: https://cdn.jsdelivr.net",
               "frame-ancestors 'self'",
             ].join('; ')
           }

@@ -30,6 +30,12 @@ export default function Home() {
                     Challenges
                   </Link>
                   <Link 
+                    href="/leaderboard" 
+                    className="text-gray-600 hover:text-primary-600 transition-colors font-medium"
+                  >
+                    Leaderboard
+                  </Link>
+                  <Link 
                     href="/dashboard" 
                     className="text-gray-600 hover:text-primary-600 transition-colors font-medium"
                   >

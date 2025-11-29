@@ -105,6 +105,9 @@ export default function ChallengesPage() {
               <span className="text-xl font-bold text-gray-900">Coding Challenges</span>
             </Link>
             <div className="flex items-center space-x-4">
+              <Link href="/leaderboard" className="text-gray-600 hover:text-primary-600 transition-colors font-medium">
+                Leaderboard
+              </Link>
               <Link href="/dashboard" className="text-gray-600 hover:text-primary-600 transition-colors font-medium">
                 Dashboard
               </Link>
