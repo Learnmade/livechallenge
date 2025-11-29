@@ -1,0 +1,172 @@
+'use client'
+
+import { useAuth } from '@/contexts/AuthContext'
+import { useBattle } from '@/contexts/BattleContext'
+import Link from 'next/link'
+import { useEffect } from 'react'
+import { Trophy, Zap, Users, Clock, Code, TrendingUp } from 'lucide-react'
+
+export default function Home() {
+  const { user, login } = useAuth()
+  const { activeBattle, leaderboard } = useBattle()
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      {/* Navigation */}
+      <nav className="border-b border-gray-700 bg-gray-900/50 backdrop-blur-sm sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-2">
+              <Code className="h-8 w-8 text-primary-500" />
+              <span className="text-xl font-bold text-white">Coding Battles</span>
+            </div>
+            <div className="flex items-center space-x-4">
+              {user ? (
+                <>
+                  <Link 
+                    href="/dashboard" 
+                    className="text-gray-300 hover:text-white transition-colors"
+                  >
+                    Dashboard
+                  </Link>
+                  <Link 
+                    href="/history" 
+                    className="text-gray-300 hover:text-white transition-colors"
+                  >
+                    History
+                  </Link>
+                  {user.isHost && (
+                    <Link 
+                      href="/admin" 
+                      className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors"
+                    >
+                      Admin Panel
+                    </Link>
+                  )}
+                  <div className="flex items-center space-x-2">
+                    <div className="h-8 w-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-semibold">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="text-white">{user.name}</span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <Link
+                    href="/login"
+                    className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg transition-colors font-medium"
+                  >
+                    Login
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {activeBattle ? (
+          <div className="mb-8">
+            <Link 
+              href="/battle"
+              className="block bg-gradient-to-r from-primary-600 to-purple-600 rounded-xl p-6 hover:shadow-2xl transition-all transform hover:scale-[1.02]"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Zap className="h-6 w-6 text-yellow-400 animate-pulse" />
+                    <h2 className="text-2xl font-bold text-white">Battle in Progress!</h2>
+                  </div>
+                  <p className="text-gray-200">{activeBattle.title}</p>
+                  <div className="flex items-center space-x-4 mt-2">
+                    <span className="text-sm text-gray-300 flex items-center">
+                      <Clock className="h-4 w-4 mr-1" />
+                      {activeBattle.timeRemaining}s remaining
+                    </span>
+                    <span className="text-sm text-gray-300 flex items-center">
+                      <Users className="h-4 w-4 mr-1" />
+                      {leaderboard.length} participants
+                    </span>
+                  </div>
+                </div>
+                <button className="bg-white text-primary-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                  Join Battle →
+                </button>
+              </div>
+            </Link>
+          </div>
+        ) : (
+          <div className="text-center mb-12">
+            <h1 className="text-5xl font-bold text-white mb-4">
+              Community Coding Battles
+            </h1>
+            <p className="text-xl text-gray-300 mb-8">
+              Compete in real-time coding challenges during live streams
+            </p>
+          </div>
+        )}
+
+        {/* Features Grid */}
+        <div className="grid md:grid-cols-3 gap-6 mb-12">
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
+            <Trophy className="h-10 w-10 text-yellow-500 mb-4" />
+            <h3 className="text-xl font-semibold text-white mb-2">Compete & Win</h3>
+            <p className="text-gray-400">
+              Solve coding problems faster than others and climb the leaderboard
+            </p>
+          </div>
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
+            <Zap className="h-10 w-10 text-primary-500 mb-4" />
+            <h3 className="text-xl font-semibold text-white mb-2">Real-Time Battles</h3>
+            <p className="text-gray-400">
+              Fast-paced 1-10 minute challenges during live streams
+            </p>
+          </div>
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
+            <TrendingUp className="h-10 w-10 text-green-500 mb-4" />
+            <h3 className="text-xl font-semibold text-white mb-2">Earn XP & Badges</h3>
+            <p className="text-gray-400">
+              Gain experience points, unlock achievements, and track your progress
+            </p>
+          </div>
+        </div>
+
+        {/* Leaderboard Preview */}
+        {leaderboard.length > 0 && (
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700">
+            <h2 className="text-2xl font-bold text-white mb-4 flex items-center">
+              <Trophy className="h-6 w-6 mr-2 text-yellow-500" />
+              Current Leaderboard
+            </h2>
+            <div className="space-y-2">
+              {leaderboard.slice(0, 5).map((entry, index) => (
+                <div 
+                  key={entry.userId}
+                  className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg"
+                >
+                  <div className="flex items-center space-x-3">
+                    <span className={`text-lg font-bold ${
+                      index === 0 ? 'text-yellow-500' :
+                      index === 1 ? 'text-gray-400' :
+                      index === 2 ? 'text-amber-600' : 'text-gray-500'
+                    }`}>
+                      #{index + 1}
+                    </span>
+                    <span className="text-white font-medium">{entry.name}</span>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <span className="text-gray-400">{entry.time}s</span>
+                    <span className="text-primary-400 font-semibold">+{entry.xp} XP</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
