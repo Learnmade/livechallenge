@@ -150,11 +150,11 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
         arrowSize: 11,
         alwaysConsumeMouseWheel: false,
       },
-      renderWhitespace: 'selection',
-      renderLineHighlight: 'all',
-      renderIndentGuides: true,
-      highlightActiveIndentGuide: true,
-      matchBrackets: 'always',
+            renderWhitespace: 'none',
+            renderLineHighlight: 'all',
+            renderIndentGuides: true,
+            highlightActiveIndentGuide: true,
+            matchBrackets: 'always',
       bracketPairColorization: {
         enabled: true,
       },
@@ -243,49 +243,49 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
       className={`w-full relative ${isDark ? 'bg-[#1e1e1e]' : 'bg-white'} border ${isDark ? 'border-[#3e3e42]' : 'border-gray-200'} rounded-lg overflow-hidden shadow-2xl`}
       style={{ height: isFullscreen ? '100vh' : height }}
     >
-      {/* VS Code-like Title Bar */}
-      <div className={`flex items-center justify-between px-3 sm:px-4 py-2.5 ${isDark ? 'bg-[#2d2d30] border-b border-[#3e3e42]' : 'bg-[#f3f3f3] border-b border-gray-200'}`}>
-        <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
-          <div className="flex items-center space-x-2 min-w-0 group">
-            <div className={`flex items-center space-x-1.5 sm:space-x-2 px-2 py-1 rounded ${isDark ? 'bg-[#1e1e1e] hover:bg-[#252526]' : 'bg-white hover:bg-gray-50'} transition-colors cursor-default`}>
-              <FileCode className={`h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0 ${isDark ? 'text-[#858585]' : 'text-gray-500'}`} />
-              <span className={`text-xs sm:text-sm font-medium truncate ${isDark ? 'text-[#cccccc]' : 'text-gray-800'}`}>
+      {/* VS Code-like Title Bar - Enhanced Visual */}
+      <div className={`flex items-center justify-between px-4 sm:px-5 py-3 ${isDark ? 'bg-gradient-to-r from-[#1e1e1e] via-[#252526] to-[#2d2d30] border-b-2 border-[#007acc]' : 'bg-gradient-to-r from-gray-50 via-white to-gray-50 border-b-2 border-primary-600'} shadow-sm`}>
+        <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
+          <div className="flex items-center space-x-2.5 min-w-0 group">
+            <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg shadow-sm ${isDark ? 'bg-[#1e1e1e] border border-[#3e3e42] hover:bg-[#252526] hover:border-[#007acc]' : 'bg-white border border-gray-300 hover:bg-gray-50 hover:border-primary-500'} transition-all cursor-default`}>
+              <FileCode className={`h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0 ${isDark ? 'text-[#007acc]' : 'text-primary-600'}`} />
+              <span className={`text-sm sm:text-base font-semibold truncate ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 {fileName}.{languageMap[language] || 'js'}
               </span>
             </div>
-            <div className={`text-[10px] sm:text-xs px-2 py-0.5 rounded font-semibold flex-shrink-0 ${isDark ? 'bg-[#1e1e1e] text-[#858585] border border-[#3e3e42]' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>
+            <div className={`text-xs sm:text-sm px-3 py-1.5 rounded-lg font-bold flex-shrink-0 shadow-sm ${isDark ? 'bg-[#007acc] text-white border border-[#005a9e]' : 'bg-primary-600 text-white border border-primary-700'}`}>
               <span className="hidden sm:inline">{languageMap[language]?.toUpperCase() || 'JAVASCRIPT'}</span>
               <span className="sm:hidden">{languageMap[language]?.toUpperCase().slice(0, 3) || 'JS'}</span>
             </div>
           </div>
         </div>
         
-        <div className="flex items-center space-x-0.5 sm:space-x-1 flex-shrink-0">
+        <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
           {showThemeToggle && !readOnly && (
             <button
               type="button"
               onClick={toggleTheme}
-              className={`p-1.5 sm:p-2 rounded-md transition-all ${isDark ? 'hover:bg-[#3e3e42] text-[#cccccc] hover:text-white' : 'hover:bg-gray-200 text-gray-600 hover:text-gray-900'}`}
+              className={`p-2 sm:p-2.5 rounded-lg transition-all ${isDark ? 'hover:bg-[#3e3e42] text-[#cccccc] hover:text-white hover:bg-opacity-80' : 'hover:bg-gray-200 text-gray-600 hover:text-gray-900'} shadow-sm`}
               title={isDark ? 'Switch to Light Theme (Ctrl+K Ctrl+T)' : 'Switch to Dark Theme (Ctrl+K Ctrl+T)'}
             >
-              {isDark ? <Sun className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <Moon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
+              {isDark ? <Sun className="h-4 w-4 sm:h-5 sm:w-5" /> : <Moon className="h-4 w-4 sm:h-5 sm:w-5" />}
             </button>
           )}
           <button
             type="button"
             onClick={() => setShowSettings(!showSettings)}
-            className={`p-1.5 sm:p-2 rounded-md transition-all ${isDark ? 'hover:bg-[#3e3e42] text-[#cccccc] hover:text-white' : 'hover:bg-gray-200 text-gray-600 hover:text-gray-900'}`}
+            className={`p-2 sm:p-2.5 rounded-lg transition-all ${isDark ? 'hover:bg-[#3e3e42] text-[#cccccc] hover:text-white hover:bg-opacity-80' : 'hover:bg-gray-200 text-gray-600 hover:text-gray-900'} shadow-sm`}
             title="Editor Settings"
           >
-            <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
           <button
             type="button"
             onClick={toggleFullscreen}
-            className={`p-1.5 sm:p-2 rounded-md transition-all ${isDark ? 'hover:bg-[#3e3e42] text-[#cccccc] hover:text-white' : 'hover:bg-gray-200 text-gray-600 hover:text-gray-900'}`}
+            className={`p-2 sm:p-2.5 rounded-lg transition-all ${isDark ? 'hover:bg-[#3e3e42] text-[#cccccc] hover:text-white hover:bg-opacity-80' : 'hover:bg-gray-200 text-gray-600 hover:text-gray-900'} shadow-sm`}
             title={isFullscreen ? 'Exit Fullscreen (F11)' : 'Enter Fullscreen (F11)'}
           >
-            {isFullscreen ? <Minimize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <Maximize2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
+            {isFullscreen ? <Minimize2 className="h-4 w-4 sm:h-5 sm:w-5" /> : <Maximize2 className="h-4 w-4 sm:h-5 sm:w-5" />}
           </button>
         </div>
       </div>
@@ -425,7 +425,7 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
               arrowSize: 11,
               alwaysConsumeMouseWheel: false,
             },
-            renderWhitespace: 'selection',
+            renderWhitespace: 'none',
             renderLineHighlight: 'all',
             renderIndentGuides: true,
             highlightActiveIndentGuide: true,
