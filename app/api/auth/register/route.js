@@ -61,6 +61,21 @@ export async function POST(request) {
     )
   } catch (error) {
     console.error('Registration error:', error)
+    
+    // Provide helpful error messages for connection issues
+    if (error.message?.includes('ENOTFOUND') || error.message?.includes('querySrv')) {
+      console.error('\n💡 MongoDB Connection Error Detected!')
+      console.error('Your MONGODB_URI appears to be incorrect.')
+      console.error('Please check MONGODB_CONNECTION_GUIDE.md for help.\n')
+      return NextResponse.json(
+        { 
+          error: 'Database connection failed',
+          message: 'Please check your MongoDB connection string. The connection string should include your actual cluster name, not "cluster.mongodb.net". See MONGODB_CONNECTION_GUIDE.md for detailed instructions.'
+        },
+        { status: 503 }
+      )
+    }
+    
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
