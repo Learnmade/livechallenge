@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useBattle } from '@/contexts/BattleContext'
 import { useRouter } from 'next/navigation'
-import { Play, Square, Plus, Settings, Users, TrendingUp } from 'lucide-react'
+import { Play, Square, Plus, Settings, Users, TrendingUp, Clock, X, Trash2, Eye, EyeOff, RefreshCw } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function AdminPage() {
@@ -12,14 +12,13 @@ export default function AdminPage() {
   const { activeBattle, setActiveBattle, socket } = useBattle()
   const router = useRouter()
   
-  useEffect(() => {
-    // Wait for auth check to complete before redirecting
-    if (!authLoading && (!user || !user.isHost)) {
-      router.push('/')
-    }
-  }, [user, authLoading, router])
   const [isCreating, setIsCreating] = useState(false)
   const [isSeeding, setIsSeeding] = useState(false)
+  const [showParticipants, setShowParticipants] = useState(false)
+  const [selectedChallenge, setSelectedChallenge] = useState({ language: 'javascript', number: '1' })
+  const [participants, setParticipants] = useState([])
+  const [loadingParticipants, setLoadingParticipants] = useState(false)
+  const [challenges, setChallenges] = useState([])
   const [newBattle, setNewBattle] = useState({
     title: '',
     difficulty: 'easy',
@@ -39,6 +38,93 @@ export default function AdminPage() {
       java: 'public class Solution {\n    public static void main(String[] args) {\n        // Your code here\n    }\n}',
     },
   })
+
+  // Fetch challenges for participant management
+  const fetchChallenges = useCallback(async () => {
+    try {
+      const response = await fetch('/api/challenges?language=javascript', {
+        credentials: 'include',
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setChallenges(data.challenges || [])
+      }
+    } catch (error) {
+      console.error('Error fetching challenges:', error)
+    }
+  }, [])
+
+  // Fetch participants with timing
+  const fetchParticipants = useCallback(async () => {
+    if (!selectedChallenge.language || !selectedChallenge.number) return
+
+    setLoadingParticipants(true)
+    try {
+      const response = await fetch(
+        `/api/admin/challenges/${selectedChallenge.language}/${selectedChallenge.number}/participants`,
+        {
+          credentials: 'include',
+        }
+      )
+
+      if (response.ok) {
+        const data = await response.json()
+        setParticipants(data.participants || [])
+      } else {
+        const errorData = await response.json()
+        toast.error(errorData.error || 'Failed to load participants')
+        setParticipants([])
+      }
+    } catch (error) {
+      console.error('Error fetching participants:', error)
+      toast.error('Failed to load participants')
+      setParticipants([])
+    } finally {
+      setLoadingParticipants(false)
+    }
+  }, [selectedChallenge])
+
+  // Remove participant
+  const handleRemoveParticipant = async (userId, userName) => {
+    if (!confirm(`Are you sure you want to remove ${userName} from this challenge?`)) {
+      return
+    }
+
+    try {
+      const response = await fetch(
+        `/api/admin/challenges/${selectedChallenge.language}/${selectedChallenge.number}/participants/${userId}`,
+        {
+          method: 'DELETE',
+          credentials: 'include',
+        }
+      )
+
+      if (response.ok) {
+        toast.success(`Removed ${userName} from challenge`)
+        fetchParticipants() // Refresh list
+      } else {
+        const errorData = await response.json()
+        toast.error(errorData.error || 'Failed to remove participant')
+      }
+    } catch (error) {
+      console.error('Error removing participant:', error)
+      toast.error('Failed to remove participant')
+    }
+  }
+
+  useEffect(() => {
+    // Wait for auth check to complete before redirecting
+    if (!authLoading && (!user || !user.isHost)) {
+      router.push('/')
+    }
+  }, [user, authLoading, router])
+
+  useEffect(() => {
+    if (showParticipants) {
+      fetchChallenges()
+      fetchParticipants()
+    }
+  }, [showParticipants, fetchChallenges, fetchParticipants])
 
   // Show loading state while checking authentication
   if (authLoading) {
@@ -188,6 +274,181 @@ export default function AdminPage() {
               )}
             </button>
           </div>
+        </div>
+
+        {/* Participants Management Section */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-1">Participants Management</h2>
+              <p className="text-gray-600">View and manage participants with timing information</p>
+            </div>
+            <button
+              onClick={() => {
+                setShowParticipants(!showParticipants)
+                if (!showParticipants) {
+                  fetchChallenges()
+                }
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2 shadow-sm"
+            >
+              {showParticipants ? (
+                <>
+                  <EyeOff className="h-5 w-5" />
+                  <span>Hide Participants</span>
+                </>
+              ) : (
+                <>
+                  <Eye className="h-5 w-5" />
+                  <span>View Participants</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {showParticipants && (
+            <div className="space-y-4">
+              {/* Challenge Selector */}
+              <div className="grid md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Language
+                  </label>
+                  <select
+                    value={selectedChallenge.language}
+                    onChange={(e) => {
+                      setSelectedChallenge({ ...selectedChallenge, language: e.target.value, number: '1' })
+                      setParticipants([])
+                    }}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  >
+                    <option value="javascript">JavaScript</option>
+                    <option value="python">Python</option>
+                    <option value="java">Java</option>
+                    <option value="cpp">C++</option>
+                    <option value="go">Go</option>
+                    <option value="rust">Rust</option>
+                    <option value="csharp">C#</option>
+                    <option value="typescript">TypeScript</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Challenge Number
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={selectedChallenge.number}
+                    onChange={(e) => {
+                      setSelectedChallenge({ ...selectedChallenge, number: e.target.value })
+                      setParticipants([])
+                    }}
+                    onBlur={fetchParticipants}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+                <div className="flex items-end">
+                  <button
+                    onClick={fetchParticipants}
+                    disabled={loadingParticipants}
+                    className="w-full bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${loadingParticipants ? 'animate-spin' : ''}`} />
+                    <span>Refresh</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Participants List */}
+              {loadingParticipants ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+                  <p className="text-gray-600 mt-4">Loading participants...</p>
+                </div>
+              ) : participants.length === 0 ? (
+                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                  <Users className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-600">No participants found for this challenge</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-600">
+                      Showing <span className="font-semibold">{participants.length}</span> participant{participants.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                  <div className="overflow-x-auto border border-gray-200 rounded-lg">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">User</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Submissions</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Time Spent</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Best Time</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Last Active</th>
+                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
+                        </tr>
+                      </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {participants.map((participant) => (
+                        <tr key={participant.userId} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="h-8 w-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-semibold mr-3">
+                                {participant.name.charAt(0).toUpperCase()}
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">{participant.name}</div>
+                                <div className="text-xs text-gray-500">{participant.email}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              participant.status === 'passed' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {participant.status === 'passed' ? 'Solved' : 'Solving'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                            {participant.passedSubmissions}/{participant.totalSubmissions}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                            <div className="flex items-center">
+                              <Clock className="h-4 w-4 text-gray-400 mr-1" />
+                              {participant.timeSpentFormatted}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                            {participant.bestExecutionTime ? `${participant.bestExecutionTime}ms` : '-'}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                            {participant.lastActive}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm">
+                            <button
+                              onClick={() => handleRemoveParticipant(participant.userId, participant.name)}
+                              className="text-red-600 hover:text-red-800 transition-colors flex items-center space-x-1"
+                              title="Remove participant"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span>Remove</span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {activeBattle ? (
