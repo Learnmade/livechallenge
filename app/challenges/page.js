@@ -28,11 +28,16 @@ export default function ChallengesPage() {
   const fetchChallenges = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/challenges?language=${selectedLanguage}`)
+      const response = await fetch(`/api/challenges?language=${selectedLanguage}`, {
+        credentials: 'include',
+      })
       if (response.ok) {
         const data = await response.json()
         setChallenges(data.challenges || [])
         setStats(data.stats || {})
+      } else {
+        const errorData = await response.json()
+        console.error('Error fetching challenges:', errorData)
       }
     } catch (error) {
       console.error('Error fetching challenges:', error)
@@ -153,7 +158,15 @@ export default function ChallengesPage() {
           ) : challenges.length === 0 ? (
             <div className="text-center py-12 bg-gray-800/50 rounded-xl border border-gray-700">
               <Code className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400">No challenges available for this language yet.</p>
+              <p className="text-gray-400 mb-2">No challenges available for this language yet.</p>
+              {user?.isHost && (
+                <p className="text-gray-500 text-sm mt-2">
+                  <Link href="/admin" className="text-primary-400 hover:text-primary-300 underline">
+                    Go to Admin Panel
+                  </Link>
+                  {' '}to seed challenges
+                </p>
+              )}
             </div>
           ) : (
             <div className="grid gap-4">

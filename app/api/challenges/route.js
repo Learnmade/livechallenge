@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/auth'
 import Challenge from '@/models/Challenge'
 import ChallengeSubmission from '@/models/ChallengeSubmission'
 import connectDB from '@/lib/mongodb'
+import mongoose from 'mongoose'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,6 +14,9 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url)
     const language = searchParams.get('language') || 'javascript'
+
+    // Convert user.id to ObjectId
+    const userId = new mongoose.Types.ObjectId(user.id)
 
     // Get all challenges for the language
     const challenges = await Challenge.find({ 
@@ -27,7 +31,7 @@ export async function GET(request) {
       challenges.map(async (challenge) => {
         const submission = await ChallengeSubmission.findOne({
           challengeId: challenge._id,
-          userId: user.id,
+          userId: userId,
           status: 'passed',
         })
 
@@ -35,31 +39,36 @@ export async function GET(request) {
         challengeObj.id = challengeObj._id.toString()
         delete challengeObj._id
 
+        const hasAttempted = await ChallengeSubmission.exists({ 
+          challengeId: challenge._id, 
+          userId: userId 
+        })
+
         return {
           ...challengeObj,
-          userStatus: submission ? 'completed' : 
-                     await ChallengeSubmission.exists({ challengeId: challenge._id, userId: user.id }) ? 'attempted' : 'not-started',
+          userStatus: submission ? 'completed' : (hasAttempted ? 'attempted' : 'not-started'),
         }
       })
     )
 
     // Get stats
+    const challengeIds = challenges.map(c => c._id)
     const stats = {
       totalChallenges: challenges.length,
-      completed: await ChallengeSubmission.countDocuments({
-        userId: user.id,
+      completed: challengeIds.length > 0 ? await ChallengeSubmission.countDocuments({
+        userId: userId,
         status: 'passed',
-        challengeId: { $in: challenges.map(c => c._id) },
-      }),
-      participants: await ChallengeSubmission.distinct('userId', {
-        challengeId: { $in: challenges.map(c => c._id) },
-      }).then(ids => ids.length),
-      points: await ChallengeSubmission.aggregate([
+        challengeId: { $in: challengeIds },
+      }) : 0,
+      participants: challengeIds.length > 0 ? await ChallengeSubmission.distinct('userId', {
+        challengeId: { $in: challengeIds },
+      }).then(ids => ids.length) : 0,
+      points: challengeIds.length > 0 ? await ChallengeSubmission.aggregate([
         {
           $match: {
-            userId: new (await import('mongoose')).default.Types.ObjectId(user.id),
+            userId: userId,
             status: 'passed',
-            challengeId: { $in: challenges.map(c => c._id) },
+            challengeId: { $in: challengeIds },
           },
         },
         {
@@ -68,7 +77,7 @@ export async function GET(request) {
             total: { $sum: '$pointsEarned' },
           },
         },
-      ]).then(result => result[0]?.total || 0),
+      ]).then(result => result[0]?.total || 0) : 0,
     }
 
     return NextResponse.json({
@@ -84,7 +93,7 @@ export async function GET(request) {
     }
     console.error('Get challenges error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error.message },
       { status: 500 }
     )
   }
