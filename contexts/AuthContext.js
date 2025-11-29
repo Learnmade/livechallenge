@@ -34,7 +34,7 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const login = async (email, password) => {
+  const login = async (email, password, rememberMe = false) => {
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
@@ -42,7 +42,7 @@ export function AuthProvider({ children }) {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, rememberMe }),
       })
 
       const data = await response.json()
@@ -62,7 +62,7 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const register = async (name, email, password, confirmPassword) => {
+  const register = async (name, email, password, confirmPassword, rememberMe = false) => {
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -70,7 +70,7 @@ export function AuthProvider({ children }) {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ name, email, password, confirmPassword }),
+        body: JSON.stringify({ name, email, password, confirmPassword, rememberMe }),
       })
 
       const data = await response.json()

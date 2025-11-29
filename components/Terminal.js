@@ -6,13 +6,13 @@ export default function Terminal({ output, error, submissionResult }) {
   const hasContent = output || error || submissionResult
 
   return (
-    <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
-      <div className="bg-gray-900/50 px-4 py-3 border-b border-gray-700 flex items-center space-x-2">
-        <TerminalIcon className="h-5 w-5 text-green-400" />
-        <h2 className="text-lg font-semibold text-white">Terminal</h2>
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center space-x-2">
+        <TerminalIcon className="h-5 w-5 text-green-600" />
+        <h2 className="text-lg font-semibold text-gray-900">Terminal</h2>
       </div>
       
-      <div className="p-4 font-mono text-sm">
+      <div className="p-4 font-mono text-sm bg-gray-900 text-green-400 min-h-[300px]">
         {!hasContent ? (
           <div className="text-gray-500 text-center py-8">
             <TerminalIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
@@ -25,8 +25,8 @@ export default function Terminal({ output, error, submissionResult }) {
             {submissionResult && (
               <div className={`p-4 rounded-lg border ${
                 submissionResult.status === 'passed'
-                  ? 'bg-green-900/20 border-green-700/50'
-                  : 'bg-red-900/20 border-red-700/50'
+                  ? 'bg-green-900/30 border-green-700/50'
+                  : 'bg-red-900/30 border-red-700/50'
               }`}>
                 <div className="flex items-center space-x-2 mb-3">
                   {submissionResult.status === 'passed' ? (
@@ -48,8 +48,8 @@ export default function Terminal({ output, error, submissionResult }) {
                         key={index}
                         className={`p-3 rounded border ${
                           result.passed
-                            ? 'bg-green-900/10 border-green-700/30'
-                            : 'bg-red-900/10 border-red-700/30'
+                            ? 'bg-green-900/20 border-green-700/40'
+                            : 'bg-red-900/20 border-red-700/40'
                         }`}
                       >
                         <div className="flex items-center justify-between mb-2">
@@ -107,7 +107,7 @@ export default function Terminal({ output, error, submissionResult }) {
                   <TerminalIcon className="h-4 w-4 text-blue-400" />
                   <span className="text-gray-400 font-medium">Output:</span>
                 </div>
-                <pre className="bg-gray-900 p-3 rounded text-gray-200 whitespace-pre-wrap overflow-x-auto">
+                <pre className="bg-gray-950 p-3 rounded text-green-400 whitespace-pre-wrap overflow-x-auto border border-gray-800">
                   {output}
                 </pre>
               </div>
@@ -120,7 +120,7 @@ export default function Terminal({ output, error, submissionResult }) {
                   <AlertCircle className="h-4 w-4 text-red-400" />
                   <span className="text-red-400 font-medium">Error:</span>
                 </div>
-                <pre className="bg-red-900/20 p-3 rounded text-red-400 whitespace-pre-wrap overflow-x-auto border border-red-700/30">
+                <pre className="bg-red-900/30 p-3 rounded text-red-400 whitespace-pre-wrap overflow-x-auto border border-red-700/50">
                   {error}
                 </pre>
               </div>

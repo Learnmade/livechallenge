@@ -11,15 +11,15 @@ const inter = Inter({ subsets: ['latin'] })
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <head>
         <title>Community Coding Battles - Learnmade</title>
         <meta name="description" content="Real-time competitive coding battles for live streams" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#0ea5e9" />
+        <meta name="theme-color" content="#0284c7" />
         <link rel="icon" href="/favicon.ico" />
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.className} bg-gray-50`}>
         <ErrorBoundary>
           <AuthProvider>
             <BattleProvider>
@@ -29,9 +29,10 @@ export default function RootLayout({ children }) {
                 toastOptions={{
                   duration: 3000,
                   style: {
-                    background: '#1e1e1e',
-                    color: '#fff',
-                    border: '1px solid #333',
+                    background: '#fff',
+                    color: '#1f2937',
+                    border: '1px solid #e5e7eb',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
                   },
                 }}
               />

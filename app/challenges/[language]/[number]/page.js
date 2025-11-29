@@ -7,6 +7,7 @@ import CodeEditor from '@/components/CodeEditor'
 import Terminal from '@/components/Terminal'
 import LiveParticipants from '@/components/LiveParticipants'
 import ChallengeLeaderboard from '@/components/ChallengeLeaderboard'
+import ProblemDisplay from '@/components/ProblemDisplay'
 import { Play, CheckCircle, XCircle, Users, Trophy, Clock, Code as CodeIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -161,10 +162,10 @@ export default function ChallengePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
-          <p className="text-gray-400 mt-4">Loading challenge...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="text-gray-600 mt-4">Loading challenge...</p>
         </div>
       </div>
     )
@@ -172,45 +173,45 @@ export default function ChallengePage() {
 
   if (!challenge) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-400">Challenge not found</p>
+          <p className="text-gray-600">Challenge not found</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
       {/* Header */}
-      <div className="bg-gray-900/50 backdrop-blur-sm border-b border-gray-700 sticky top-0 z-40">
+      <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white">
+              <h1 className="text-2xl font-bold text-gray-900">
                 Challenge #{challenge.challengeNumber}: {challenge.title}
               </h1>
               <div className="flex items-center space-x-4 mt-2">
                 <span className={`px-2 py-1 rounded text-xs font-medium ${
-                  challenge.difficulty === 'easy' ? 'bg-green-900/30 text-green-400' :
-                  challenge.difficulty === 'medium' ? 'bg-yellow-900/30 text-yellow-400' :
-                  'bg-red-900/30 text-red-400'
+                  challenge.difficulty === 'easy' ? 'bg-green-50 text-green-700 border border-green-200' :
+                  challenge.difficulty === 'medium' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
+                  'bg-red-50 text-red-700 border border-red-200'
                 }`}>
                   {challenge.difficulty}
                 </span>
-                <span className="text-gray-400 text-sm flex items-center">
-                  <Trophy className="h-4 w-4 mr-1" />
+                <span className="text-gray-600 text-sm flex items-center">
+                  <Trophy className="h-4 w-4 mr-1 text-yellow-500" />
                   {challenge.points} points
                 </span>
-                <span className="text-gray-400 text-sm flex items-center">
-                  <Users className="h-4 w-4 mr-1" />
+                <span className="text-gray-600 text-sm flex items-center">
+                  <Users className="h-4 w-4 mr-1 text-primary-600" />
                   {participants.length} active
                 </span>
               </div>
             </div>
             <button
               onClick={() => router.push('/challenges')}
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-gray-600 hover:text-primary-600 transition-colors font-medium"
             >
               ← Back to Challenges
             </button>
@@ -223,54 +224,17 @@ export default function ChallengePage() {
           {/* Left Column - Problem & Editor */}
           <div className="lg:col-span-3 space-y-6">
             {/* Problem Description */}
-            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
-              <h2 className="text-xl font-semibold text-white mb-4">Problem Description</h2>
-              <div className="prose prose-invert max-w-none">
-                <p className="text-gray-300 whitespace-pre-wrap mb-4">{challenge.description}</p>
-                
-                {challenge.examples && challenge.examples.length > 0 && (
-                  <div className="mt-6">
-                    <h3 className="text-lg font-semibold text-white mb-3">Examples:</h3>
-                    {challenge.examples.map((example, index) => (
-                      <div key={index} className="bg-gray-900/50 rounded-lg p-4 mb-3">
-                        <div className="mb-2">
-                          <span className="text-sm font-medium text-gray-400">Input:</span>
-                          <pre className="mt-1 text-sm text-gray-200 bg-gray-800 p-3 rounded">{example.input}</pre>
-                        </div>
-                        <div>
-                          <span className="text-sm font-medium text-gray-400">Output:</span>
-                          <pre className="mt-1 text-sm text-gray-200 bg-gray-800 p-3 rounded">{example.output}</pre>
-                        </div>
-                        {example.explanation && (
-                          <p className="text-sm text-gray-400 mt-2">{example.explanation}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {challenge.constraints && challenge.constraints.length > 0 && (
-                  <div className="mt-6">
-                    <h3 className="text-lg font-semibold text-white mb-3">Constraints:</h3>
-                    <ul className="list-disc list-inside space-y-1 text-gray-300">
-                      {challenge.constraints.map((constraint, index) => (
-                        <li key={index}>{constraint}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </div>
+            <ProblemDisplay problem={challenge} />
 
             {/* Code Editor */}
-            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
-              <div className="bg-gray-900/50 px-4 py-3 border-b border-gray-700 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white flex items-center">
-                  <CodeIcon className="h-5 w-5 mr-2" />
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="bg-primary-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <CodeIcon className="h-5 w-5 mr-2 text-primary-600" />
                   Code Editor
                 </h2>
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-400">{language.toUpperCase()}</span>
+                  <span className="text-sm text-gray-700 font-medium">{language.toUpperCase()}</span>
                 </div>
               </div>
               <CodeEditor
@@ -280,11 +244,11 @@ export default function ChallengePage() {
                 theme="vs-dark"
                 height="500px"
               />
-              <div className="bg-gray-900/50 px-4 py-3 border-t border-gray-700 flex items-center space-x-3">
+              <div className="bg-gray-50 px-4 py-3 border-t border-gray-200 flex items-center space-x-3">
                 <button
                   onClick={handleRun}
                   disabled={isRunning || isSubmitting}
-                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-semibold transition-colors flex items-center space-x-2"
+                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-semibold transition-colors flex items-center space-x-2 shadow-sm"
                 >
                   <Play className="h-4 w-4" />
                   <span>{isRunning ? 'Running...' : 'Run Code'}</span>
@@ -292,7 +256,7 @@ export default function ChallengePage() {
                 <button
                   onClick={handleSubmit}
                   disabled={isSubmitting || isRunning}
-                  className="bg-primary-600 hover:bg-primary-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-semibold transition-colors flex items-center space-x-2"
+                  className="bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-semibold transition-colors flex items-center space-x-2 shadow-sm"
                 >
                   {isSubmitting ? (
                     <>

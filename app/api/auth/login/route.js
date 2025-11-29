@@ -27,7 +27,7 @@ export async function POST(request) {
       )
     }
 
-    const { email, password } = validation.data
+    const { email, password, rememberMe = false } = validation.data
 
     // Get user with password
     const user = await getUserByEmailWithPassword(email)
@@ -49,10 +49,10 @@ export async function POST(request) {
 
     // Generate token (use _id for MongoDB)
     const userId = user._id ? user._id.toString() : user.id
-    const token = generateToken({ userId, email: user.email })
+    const token = generateToken({ userId, email: user.email }, rememberMe)
 
-    // Set cookie
-    await setAuthCookie(token)
+    // Set cookie with rememberMe option
+    await setAuthCookie(token, rememberMe)
 
     // Return user (password already excluded by select)
     // Convert _id to id for consistency

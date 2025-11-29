@@ -41,10 +41,10 @@ export default function SubmissionReviewPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
-          <p className="text-gray-400 mt-4">Loading submission...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="text-gray-600 mt-4">Loading submission...</p>
         </div>
       </div>
     )
@@ -52,37 +52,37 @@ export default function SubmissionReviewPage() {
 
   if (!submission) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-400">Submission not found</p>
+          <p className="text-gray-600">Submission not found</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link
           href={`/challenges/${language}/${number}`}
-          className="inline-flex items-center space-x-2 text-gray-400 hover:text-white mb-6 transition-colors"
+          className="inline-flex items-center space-x-2 text-gray-600 hover:text-primary-600 mb-6 transition-colors font-medium"
         >
           <ArrowLeft className="h-4 w-4" />
           <span>Back to Challenge</span>
         </Link>
 
-        <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 mb-6">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-bold text-white mb-2">Submission Review</h1>
-              <p className="text-gray-400">
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">Submission Review</h1>
+              <p className="text-gray-600">
                 Challenge #{submission.challengeId.challengeNumber}: {submission.challengeId.title}
               </p>
             </div>
             <div className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${
               submission.status === 'passed'
-                ? 'bg-green-900/30 text-green-400'
-                : 'bg-red-900/30 text-red-400'
+                ? 'bg-green-50 text-green-700 border border-green-200'
+                : 'bg-red-50 text-red-700 border border-red-200'
             }`}>
               {submission.status === 'passed' ? (
                 <CheckCircle className="h-5 w-5" />
@@ -96,20 +96,20 @@ export default function SubmissionReviewPage() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-4">
-            <div className="bg-gray-900/50 rounded-lg p-4">
-              <div className="text-sm text-gray-400 mb-1">Submitted By</div>
-              <div className="text-white font-semibold">{submission.userId.name}</div>
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div className="text-sm text-gray-600 mb-1">Submitted By</div>
+              <div className="text-gray-900 font-semibold">{submission.userId.name}</div>
             </div>
-            <div className="bg-gray-900/50 rounded-lg p-4">
-              <div className="text-sm text-gray-400 mb-1">Execution Time</div>
-              <div className="text-white font-semibold flex items-center">
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div className="text-sm text-gray-600 mb-1">Execution Time</div>
+              <div className="text-gray-900 font-semibold flex items-center">
                 <Clock className="h-4 w-4 mr-1" />
                 {submission.executionTime}ms
               </div>
             </div>
-            <div className="bg-gray-900/50 rounded-lg p-4">
-              <div className="text-sm text-gray-400 mb-1">Points Earned</div>
-              <div className="text-white font-semibold flex items-center">
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div className="text-sm text-gray-600 mb-1">Points Earned</div>
+              <div className="text-gray-900 font-semibold flex items-center">
                 <Trophy className="h-4 w-4 mr-1 text-yellow-500" />
                 {submission.pointsEarned || 0} points
               </div>
@@ -119,9 +119,9 @@ export default function SubmissionReviewPage() {
 
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Code */}
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
-            <div className="bg-gray-900/50 px-4 py-3 border-b border-gray-700">
-              <h2 className="text-lg font-semibold text-white">Submitted Code</h2>
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="bg-primary-50 px-4 py-3 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Submitted Code</h2>
             </div>
             <CodeEditor
               language={submission.language}
@@ -134,8 +134,8 @@ export default function SubmissionReviewPage() {
           </div>
 
           {/* Test Results */}
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Test Results</h2>
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Test Results</h2>
             <div className="space-y-3">
               {submission.testResults && submission.testResults.length > 0 ? (
                 submission.testResults.map((result, index) => (
@@ -143,45 +143,45 @@ export default function SubmissionReviewPage() {
                     key={index}
                     className={`p-4 rounded-lg border ${
                       result.passed
-                        ? 'bg-green-900/20 border-green-700/50'
-                        : 'bg-red-900/20 border-red-700/50'
+                        ? 'bg-green-50 border-green-200'
+                        : 'bg-red-50 border-red-200'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-white font-medium">
+                      <span className="text-gray-900 font-medium">
                         Test Case {result.testCaseIndex + 1}
                       </span>
                       {result.passed ? (
-                        <CheckCircle className="h-5 w-5 text-green-400" />
+                        <CheckCircle className="h-5 w-5 text-green-600" />
                       ) : (
-                        <XCircle className="h-5 w-5 text-red-400" />
+                        <XCircle className="h-5 w-5 text-red-600" />
                       )}
                     </div>
                     <div className="space-y-2 text-sm">
                       <div>
-                        <span className="text-gray-400">Input:</span>
-                        <pre className="mt-1 text-gray-200 bg-gray-900 p-2 rounded text-xs">
+                        <span className="text-gray-700">Input:</span>
+                        <pre className="mt-1 text-gray-900 bg-white p-2 rounded text-xs border border-gray-200">
                           {result.input}
                         </pre>
                       </div>
                       <div>
-                        <span className="text-gray-400">Expected:</span>
-                        <pre className="mt-1 text-green-400 bg-gray-900 p-2 rounded text-xs">
+                        <span className="text-gray-700">Expected:</span>
+                        <pre className="mt-1 text-green-700 bg-white p-2 rounded text-xs border border-gray-200">
                           {result.expectedOutput}
                         </pre>
                       </div>
                       {!result.passed && (
                         <div>
-                          <span className="text-gray-400">Got:</span>
-                          <pre className="mt-1 text-red-400 bg-gray-900 p-2 rounded text-xs">
+                          <span className="text-gray-700">Got:</span>
+                          <pre className="mt-1 text-red-700 bg-white p-2 rounded text-xs border border-gray-200">
                             {result.actualOutput || 'No output'}
                           </pre>
                         </div>
                       )}
                       {result.error && (
                         <div>
-                          <span className="text-gray-400">Error:</span>
-                          <pre className="mt-1 text-red-400 bg-gray-900 p-2 rounded text-xs">
+                          <span className="text-gray-700">Error:</span>
+                          <pre className="mt-1 text-red-700 bg-white p-2 rounded text-xs border border-gray-200">
                             {result.error}
                           </pre>
                         </div>
@@ -193,7 +193,7 @@ export default function SubmissionReviewPage() {
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8 text-gray-400">
+                <div className="text-center py-8 text-gray-600">
                   No test results available
                 </div>
               )}

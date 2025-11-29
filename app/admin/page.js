@@ -42,8 +42,8 @@ export default function AdminPage() {
   // Loading state - will redirect in useEffect if not authorized
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
+        <div className="text-gray-900">Loading...</div>
       </div>
     )
   }
@@ -144,24 +144,24 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Host Control Panel</h1>
-          <p className="text-gray-400">Manage coding battles and monitor participants</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Host Control Panel</h1>
+          <p className="text-gray-600">Manage coding battles and monitor participants</p>
         </div>
 
         {/* Seed Challenges Section */}
-        <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 mb-6">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-white mb-1">Challenge Database</h2>
-              <p className="text-gray-400">Seed 10 challenges for each programming language</p>
+              <h2 className="text-xl font-semibold text-gray-900 mb-1">Challenge Database</h2>
+              <p className="text-gray-600">Seed 10 challenges for each programming language</p>
             </div>
             <button
               onClick={handleSeedChallenges}
               disabled={isSeeding}
-              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2"
+              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2 shadow-sm"
             >
               {isSeeding ? (
                 <>
@@ -179,18 +179,18 @@ export default function AdminPage() {
         </div>
 
         {activeBattle ? (
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 mb-6">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-white mb-2">Active Battle</h2>
-                <p className="text-gray-300">{activeBattle.title}</p>
-                <p className="text-sm text-gray-400 mt-1">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Active Battle</h2>
+                <p className="text-gray-700">{activeBattle.title}</p>
+                <p className="text-sm text-gray-600 mt-1">
                   Duration: {activeBattle.duration} minutes | Difficulty: {activeBattle.difficulty}
                 </p>
               </div>
               <button
                 onClick={handleEndBattle}
-                className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2"
+                className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2 shadow-sm"
               >
                 <Square className="h-5 w-5" />
                 <span>End Battle</span>
@@ -198,15 +198,15 @@ export default function AdminPage() {
             </div>
           </div>
         ) : (
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 mb-6">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-semibold text-white mb-1">No Active Battle</h2>
-                <p className="text-gray-400">Start a new battle to engage your viewers</p>
+                <h2 className="text-xl font-semibold text-gray-900 mb-1">No Active Battle</h2>
+                <p className="text-gray-600">Start a new battle to engage your viewers</p>
               </div>
               <button
                 onClick={() => setIsCreating(true)}
-                className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2"
+                className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2 shadow-sm"
               >
                 <Plus className="h-5 w-5" />
                 <span>Create Battle</span>
