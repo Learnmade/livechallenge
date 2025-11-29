@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter, useParams } from 'next/navigation'
 import CodeEditor from '@/components/CodeEditor'
@@ -27,6 +27,47 @@ export default function ChallengePage() {
   const [leaderboard, setLeaderboard] = useState([])
   const [loading, setLoading] = useState(true)
 
+  const fetchChallenge = useCallback(async () => {
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/challenges/${language}/${number}`)
+      if (response.ok) {
+        const data = await response.json()
+        setChallenge(data.challenge)
+        setCode(data.challenge?.starterCode || '')
+      }
+    } catch (error) {
+      console.error('Error fetching challenge:', error)
+      toast.error('Failed to load challenge')
+    } finally {
+      setLoading(false)
+    }
+  }, [language, number])
+
+  const fetchParticipants = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/challenges/${language}/${number}/participants`)
+      if (response.ok) {
+        const data = await response.json()
+        setParticipants(data.participants || [])
+      }
+    } catch (error) {
+      console.error('Error fetching participants:', error)
+    }
+  }, [language, number])
+
+  const fetchLeaderboard = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/challenges/${language}/${number}/leaderboard`)
+      if (response.ok) {
+        const data = await response.json()
+        setLeaderboard(data.leaderboard || [])
+      }
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error)
+    }
+  }, [language, number])
+
   useEffect(() => {
     if (!user) {
       router.push('/login')
@@ -43,48 +84,7 @@ export default function ChallengePage() {
     }, 5000) // Update every 5 seconds
 
     return () => clearInterval(interval)
-  }, [user, router, language, number])
-
-  const fetchChallenge = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch(`/api/challenges/${language}/${number}`)
-      if (response.ok) {
-        const data = await response.json()
-        setChallenge(data.challenge)
-        setCode(data.challenge?.starterCode || '')
-      }
-    } catch (error) {
-      console.error('Error fetching challenge:', error)
-      toast.error('Failed to load challenge')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchParticipants = async () => {
-    try {
-      const response = await fetch(`/api/challenges/${language}/${number}/participants`)
-      if (response.ok) {
-        const data = await response.json()
-        setParticipants(data.participants || [])
-      }
-    } catch (error) {
-      console.error('Error fetching participants:', error)
-    }
-  }
-
-  const fetchLeaderboard = async () => {
-    try {
-      const response = await fetch(`/api/challenges/${language}/${number}/leaderboard`)
-      if (response.ok) {
-        const data = await response.json()
-        setLeaderboard(data.leaderboard || [])
-      }
-    } catch (error) {
-      console.error('Error fetching leaderboard:', error)
-    }
-  }
+  }, [user, router, fetchChallenge, fetchParticipants, fetchLeaderboard])
 
   const handleRun = async () => {
     if (!code.trim()) {

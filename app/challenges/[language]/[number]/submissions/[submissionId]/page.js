@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter, useParams } from 'next/navigation'
 import CodeEditor from '@/components/CodeEditor'
@@ -16,15 +16,7 @@ export default function SubmissionReviewPage() {
   const [submission, setSubmission] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if (!user) {
-      router.push('/login')
-      return
-    }
-    fetchSubmission()
-  }, [user, router, submissionId])
-
-  const fetchSubmission = async () => {
+  const fetchSubmission = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/challenges/${language}/${number}/submissions/${submissionId}`)
@@ -37,7 +29,15 @@ export default function SubmissionReviewPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [language, number, submissionId])
+
+  useEffect(() => {
+    if (!user) {
+      router.push('/login')
+      return
+    }
+    fetchSubmission()
+  }, [user, router, fetchSubmission])
 
   if (loading) {
     return (

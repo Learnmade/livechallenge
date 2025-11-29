@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -25,15 +25,7 @@ export default function ChallengesPage() {
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({})
 
-  useEffect(() => {
-    if (!user) {
-      router.push('/login')
-      return
-    }
-    fetchChallenges()
-  }, [user, router, selectedLanguage])
-
-  const fetchChallenges = async () => {
+  const fetchChallenges = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/challenges?language=${selectedLanguage}`)
@@ -47,7 +39,15 @@ export default function ChallengesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedLanguage])
+
+  useEffect(() => {
+    if (!user) {
+      router.push('/login')
+      return
+    }
+    fetchChallenges()
+  }, [user, router, fetchChallenges])
 
   const getDifficultyColor = (difficulty) => {
     switch (difficulty) {

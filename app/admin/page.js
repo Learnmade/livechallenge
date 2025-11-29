@@ -18,6 +18,7 @@ export default function AdminPage() {
     }
   }, [user, router])
   const [isCreating, setIsCreating] = useState(false)
+  const [isSeeding, setIsSeeding] = useState(false)
   const [newBattle, setNewBattle] = useState({
     title: '',
     difficulty: 'easy',
@@ -81,6 +82,29 @@ export default function AdminPage() {
     toast.success('Battle ended')
   }
 
+  const handleSeedChallenges = async () => {
+    setIsSeeding(true)
+    try {
+      const response = await fetch('/api/admin/seed-challenges', {
+        method: 'POST',
+        credentials: 'include',
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        toast.success(`Successfully created ${data.totalCreated} challenges!`)
+      } else {
+        toast.error(data.error || 'Failed to seed challenges')
+      }
+    } catch (error) {
+      console.error('Seed challenges error:', error)
+      toast.error('Failed to seed challenges')
+    } finally {
+      setIsSeeding(false)
+    }
+  }
+
   const addExample = () => {
     setNewBattle({
       ...newBattle,
@@ -125,6 +149,33 @@ export default function AdminPage() {
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">Host Control Panel</h1>
           <p className="text-gray-400">Manage coding battles and monitor participants</p>
+        </div>
+
+        {/* Seed Challenges Section */}
+        <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-white mb-1">Challenge Database</h2>
+              <p className="text-gray-400">Seed 10 challenges for each programming language</p>
+            </div>
+            <button
+              onClick={handleSeedChallenges}
+              disabled={isSeeding}
+              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2"
+            >
+              {isSeeding ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <span>Seeding...</span>
+                </>
+              ) : (
+                <>
+                  <Plus className="h-5 w-5" />
+                  <span>Seed Challenges</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         {activeBattle ? (
