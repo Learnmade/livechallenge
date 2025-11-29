@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
-import { Moon, Sun, Loader2 } from 'lucide-react'
+import { Moon, Sun, Loader2, Maximize2, Minimize2, Settings, FileCode } from 'lucide-react'
 
 // Dynamically import Monaco Editor to avoid SSR issues
 const MonacoEditor = dynamic(
@@ -10,52 +10,117 @@ const MonacoEditor = dynamic(
   { 
     ssr: false,
     loading: () => (
-      <div className="flex items-center justify-center h-full bg-gray-50">
+      <div className="flex items-center justify-center h-full bg-[#1e1e1e]">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary-600 mx-auto mb-2" />
-          <p className="text-gray-600">Loading editor...</p>
+          <Loader2 className="h-8 w-8 animate-spin text-[#007acc] mx-auto mb-2" />
+          <p className="text-gray-400">Loading VS Code editor...</p>
         </div>
       </div>
     )
   }
 )
 
-export default function CodeEditor({ language, value, onChange, theme: initialTheme = 'vs-dark', height = '500px', readOnly = false, showThemeToggle = true }) {
+const VSCODE_THEMES = {
+  dark: 'vs-dark',
+  light: 'vs',
+  'dark-plus': 'vs-dark',
+  'light-plus': 'vs',
+}
+
+export default function CodeEditor({ language, value, onChange, theme: initialTheme = 'vs-dark', height = '500px', readOnly = false, showThemeToggle = true, fileName = 'solution' }) {
   const editorRef = useRef(null)
   const [theme, setTheme] = useState(initialTheme)
   const [isMounted, setIsMounted] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  const [fontSize, setFontSize] = useState(14)
+  const [wordWrap, setWordWrap] = useState(true)
+  const [minimap, setMinimap] = useState(false)
 
   useEffect(() => {
     setIsMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.updateOptions({
+        fontSize,
+        wordWrap: wordWrap ? 'on' : 'off',
+        minimap: { enabled: minimap },
+      })
+    }
+  }, [fontSize, wordWrap, minimap])
 
   const handleEditorDidMount = (editor, monaco) => {
     if (!editor) return
     
     editorRef.current = editor
     
-    // Configure editor options
+    // Configure editor options to match VS Code
     editor.updateOptions({
-      fontSize: 14,
-      minimap: { enabled: false },
+      fontSize: fontSize,
+      minimap: { enabled: minimap },
       scrollBeyondLastLine: false,
       automaticLayout: true,
       tabSize: 2,
-      wordWrap: 'on',
+      insertSpaces: true,
+      wordWrap: wordWrap ? 'on' : 'off',
+      lineNumbers: 'on',
+      roundedSelection: false,
+      cursorStyle: 'line',
+      cursorBlinking: 'smooth',
+      cursorSmoothCaretAnimation: 'on',
+      readOnly: readOnly,
+      contextmenu: !readOnly,
+      selectOnLineNumbers: true,
+      glyphMargin: true,
+      folding: true,
+      foldingStrategy: 'auto',
+      showFoldingControls: 'always',
+      lineDecorationsWidth: 10,
+      lineNumbersMinChars: 3,
+      acceptSuggestionOnEnter: 'on',
+      quickSuggestions: {
+        other: true,
+        comments: false,
+        strings: false,
+      },
+      suggestOnTriggerCharacters: true,
+      scrollbar: {
+        vertical: 'auto',
+        horizontal: 'auto',
+        useShadows: true,
+        verticalHasArrows: false,
+        horizontalHasArrows: false,
+        verticalScrollbarSize: 14,
+        horizontalScrollbarSize: 14,
+      },
+      renderWhitespace: 'selection',
+      renderLineHighlight: 'all',
+      matchBrackets: 'always',
+      colorDecorators: true,
+      bracketPairColorization: {
+        enabled: true,
+      },
     })
 
     // Add keyboard shortcuts
     if (monaco) {
       try {
+        // Ctrl/Cmd + Enter to submit
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-          // Trigger submit on Ctrl/Cmd + Enter
           const submitButton = document.querySelector('button[type="button"]')
           if (submitButton && !submitButton.disabled) {
             submitButton.click()
           }
         })
+        
+        // Ctrl/Cmd + / for toggle comment
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Slash, () => {
+          editor.getAction('editor.action.commentLine').run()
+        })
       } catch (error) {
-        console.warn('Could not add keyboard shortcut:', error)
+        console.warn('Could not add keyboard shortcuts:', error)
       }
     }
   }
@@ -75,6 +140,10 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
     })
   }
 
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen)
+  }
+
   const languageMap = {
     javascript: 'javascript',
     python: 'python',
@@ -86,35 +155,152 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
     typescript: 'typescript',
   }
 
+  const getLanguageIcon = (lang) => {
+    const icons = {
+      javascript: '🟨',
+      python: '🐍',
+      java: '☕',
+      cpp: '⚡',
+      go: '🐹',
+      rust: '🦀',
+      csharp: '💜',
+      typescript: '🔷',
+    }
+    return icons[lang] || '📄'
+  }
+
+  const isDark = theme === 'vs-dark'
+
   if (!isMounted) {
     return (
-      <div style={{ height }} className="flex items-center justify-center bg-gray-50">
+      <div style={{ height }} className="flex items-center justify-center bg-[#1e1e1e]">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary-600 mx-auto mb-2" />
-          <p className="text-gray-600">Initializing editor...</p>
+          <Loader2 className="h-8 w-8 animate-spin text-[#007acc] mx-auto mb-2" />
+          <p className="text-gray-400">Initializing VS Code editor...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div style={{ height }} className="w-full relative bg-white">
-      {showThemeToggle && !readOnly && (
-        <button
-          type="button"
-          onClick={toggleTheme}
-          className="absolute top-3 right-3 z-20 bg-white border-2 border-gray-300 rounded-lg p-2.5 hover:bg-gray-50 hover:border-primary-400 transition-all shadow-lg hover:shadow-xl"
-          title={theme === 'vs-dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
-          aria-label="Toggle theme"
-        >
-          {theme === 'vs-dark' ? (
-            <Sun className="h-5 w-5 text-yellow-600" />
-          ) : (
-            <Moon className="h-5 w-5 text-gray-700" />
+    <div 
+      className={`w-full relative ${isDark ? 'bg-[#1e1e1e]' : 'bg-white'} border ${isDark ? 'border-gray-700' : 'border-gray-200'} rounded-lg overflow-hidden shadow-xl`}
+      style={{ height: isFullscreen ? '100vh' : height }}
+    >
+      {/* VS Code-like Title Bar */}
+      <div className={`flex items-center justify-between px-4 py-2 ${isDark ? 'bg-[#2d2d30] border-b border-gray-700' : 'bg-[#f3f3f3] border-b border-gray-200'}`}>
+        <div className="flex items-center space-x-3 flex-1 min-w-0">
+          <div className="flex items-center space-x-2">
+            <FileCode className={`h-4 w-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
+            <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+              {fileName}.{languageMap[language] || 'js'}
+            </span>
+          </div>
+          <div className={`text-xs px-2 py-0.5 rounded ${isDark ? 'bg-[#1e1e1e] text-gray-400' : 'bg-gray-200 text-gray-600'}`}>
+            {languageMap[language]?.toUpperCase() || 'JAVASCRIPT'}
+          </div>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          {showThemeToggle && !readOnly && (
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className={`p-1.5 rounded hover:bg-opacity-20 ${isDark ? 'hover:bg-white text-gray-400 hover:text-white' : 'hover:bg-gray-800 text-gray-600 hover:text-gray-900'} transition-colors`}
+              title={isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+              aria-label="Toggle theme"
+            >
+              {isDark ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+            </button>
           )}
-        </button>
+          <button
+            type="button"
+            onClick={() => setShowSettings(!showSettings)}
+            className={`p-1.5 rounded hover:bg-opacity-20 ${isDark ? 'hover:bg-white text-gray-400 hover:text-white' : 'hover:bg-gray-800 text-gray-600 hover:text-gray-900'} transition-colors`}
+            title="Editor Settings"
+            aria-label="Settings"
+          >
+            <Settings className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            className={`p-1.5 rounded hover:bg-opacity-20 ${isDark ? 'hover:bg-white text-gray-400 hover:text-white' : 'hover:bg-gray-800 text-gray-600 hover:text-gray-900'} transition-colors`}
+            title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+            aria-label="Toggle fullscreen"
+          >
+            {isFullscreen ? (
+              <Minimize2 className="h-4 w-4" />
+            ) : (
+              <Maximize2 className="h-4 w-4" />
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Settings Panel */}
+      {showSettings && (
+        <div className={`absolute top-10 right-2 z-30 ${isDark ? 'bg-[#252526] border-gray-700' : 'bg-white border-gray-200'} border rounded-lg shadow-2xl p-4 min-w-[200px]`}>
+          <div className="space-y-3">
+            <div>
+              <label className={`text-xs font-medium block mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                Font Size: {fontSize}px
+              </label>
+              <input
+                type="range"
+                min="10"
+                max="24"
+                value={fontSize}
+                onChange={(e) => setFontSize(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <label className={`text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                Word Wrap
+              </label>
+              <button
+                type="button"
+                onClick={() => setWordWrap(!wordWrap)}
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                  wordWrap ? (isDark ? 'bg-[#007acc]' : 'bg-primary-600') : (isDark ? 'bg-gray-600' : 'bg-gray-300')
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    wordWrap ? 'translate-x-5' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <label className={`text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                Minimap
+              </label>
+              <button
+                type="button"
+                onClick={() => setMinimap(!minimap)}
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                  minimap ? (isDark ? 'bg-[#007acc]' : 'bg-primary-600') : (isDark ? 'bg-gray-600' : 'bg-gray-300')
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    minimap ? 'translate-x-5' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+        </div>
       )}
-      <div className="w-full h-full" style={{ minHeight: height }}>
+
+      {/* Editor Container */}
+      <div className="w-full" style={{ height: isFullscreen ? 'calc(100vh - 40px)' : `calc(${height} - 40px)` }}>
         <MonacoEditor
           height="100%"
           language={languageMap[language] || 'javascript'}
@@ -123,40 +309,75 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
           theme={theme}
           onMount={handleEditorDidMount}
           loading={
-            <div className="flex items-center justify-center h-full bg-gray-50">
+            <div className={`flex items-center justify-center h-full ${isDark ? 'bg-[#1e1e1e]' : 'bg-white'}`}>
               <div className="text-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary-600 mx-auto mb-2" />
-                <p className="text-gray-600">Loading editor...</p>
+                <Loader2 className={`h-8 w-8 animate-spin mx-auto mb-2 ${isDark ? 'text-[#007acc]' : 'text-primary-600'}`} />
+                <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>Loading editor...</p>
               </div>
             </div>
           }
           options={{
-            fontSize: 14,
-            minimap: { enabled: false },
+            fontSize: fontSize,
+            minimap: { enabled: minimap },
             scrollBeyondLastLine: false,
             automaticLayout: true,
             tabSize: 2,
-            wordWrap: 'on',
-            padding: { top: 16, bottom: 16 },
+            insertSpaces: true,
+            wordWrap: wordWrap ? 'on' : 'off',
             lineNumbers: 'on',
             roundedSelection: false,
             cursorStyle: 'line',
+            cursorBlinking: 'smooth',
+            cursorSmoothCaretAnimation: 'on',
             readOnly: readOnly,
             contextmenu: !readOnly,
             selectOnLineNumbers: true,
             glyphMargin: true,
             folding: true,
+            foldingStrategy: 'auto',
+            showFoldingControls: 'always',
             lineDecorationsWidth: 10,
             lineNumbersMinChars: 3,
             acceptSuggestionOnEnter: 'on',
-            quickSuggestions: true,
+            quickSuggestions: {
+              other: true,
+              comments: false,
+              strings: false,
+            },
             suggestOnTriggerCharacters: true,
             scrollbar: {
               vertical: 'auto',
               horizontal: 'auto',
+              useShadows: true,
+              verticalHasArrows: false,
+              horizontalHasArrows: false,
+              verticalScrollbarSize: 14,
+              horizontalScrollbarSize: 14,
+            },
+            renderWhitespace: 'selection',
+            renderLineHighlight: 'all',
+            matchBrackets: 'always',
+            colorDecorators: true,
+            bracketPairColorization: {
+              enabled: true,
             },
           }}
         />
+      </div>
+
+      {/* Status Bar (VS Code-like) */}
+      <div className={`flex items-center justify-between px-4 py-1 text-xs ${isDark ? 'bg-[#007acc] text-white' : 'bg-[#f3f3f3] text-gray-700'} border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div className="flex items-center space-x-4">
+          <span className="font-medium">{languageMap[language]?.toUpperCase() || 'JAVASCRIPT'}</span>
+          <span>Spaces: 2</span>
+          <span>UTF-8</span>
+        </div>
+        <div className="flex items-center space-x-4">
+          {value && (
+            <span>{value.split('\n').length} lines</span>
+          )}
+          <span>{value ? value.length : 0} characters</span>
+        </div>
       </div>
     </div>
   )

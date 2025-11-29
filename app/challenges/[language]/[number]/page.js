@@ -237,16 +237,7 @@ export default function ChallengePage() {
             <ProblemDisplay problem={challenge} />
 
             {/* Code Editor */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-              <div className="bg-primary-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-                  <CodeIcon className="h-5 w-5 mr-2 text-primary-600" />
-                  Code Editor
-                </h2>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-700 font-medium">{language.toUpperCase()}</span>
-                </div>
-              </div>
+            <div className="rounded-xl overflow-hidden shadow-xl">
               <CodeEditor
                 language={language}
                 value={code}
@@ -257,6 +248,7 @@ export default function ChallengePage() {
                 }}
                 height="500px"
                 showThemeToggle={true}
+                fileName={`challenge-${number}`}
               />
               <div className="bg-gray-50 px-4 py-3 border-t border-gray-200 flex items-center space-x-3">
                 <button
