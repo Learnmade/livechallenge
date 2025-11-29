@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import { Moon, Sun, Loader2 } from 'lucide-react'
 
@@ -25,9 +25,14 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
   const [theme, setTheme] = useState(initialTheme)
   const [isMounted, setIsMounted] = useState(false)
 
-  const handleEditorDidMount = (editor, monaco) => {
-    editorRef.current = editor
+  useEffect(() => {
     setIsMounted(true)
+  }, [])
+
+  const handleEditorDidMount = (editor, monaco) => {
+    if (!editor) return
+    
+    editorRef.current = editor
     
     // Configure editor options
     editor.updateOptions({
@@ -41,13 +46,17 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
 
     // Add keyboard shortcuts
     if (monaco) {
-      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-        // Trigger submit on Ctrl/Cmd + Enter
-        const submitButton = document.querySelector('button[type="button"]')
-        if (submitButton && !submitButton.disabled) {
-          submitButton.click()
-        }
-      })
+      try {
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+          // Trigger submit on Ctrl/Cmd + Enter
+          const submitButton = document.querySelector('button[type="button"]')
+          if (submitButton && !submitButton.disabled) {
+            submitButton.click()
+          }
+        })
+      } catch (error) {
+        console.warn('Could not add keyboard shortcut:', error)
+      }
     }
   }
 
@@ -77,6 +86,17 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
     typescript: 'typescript',
   }
 
+  if (!isMounted) {
+    return (
+      <div style={{ height }} className="flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary-600 mx-auto mb-2" />
+          <p className="text-gray-600">Initializing editor...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{ height }} className="w-full relative bg-white">
       {showThemeToggle && !readOnly && (
@@ -94,12 +114,11 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
           )}
         </button>
       )}
-      <div className="w-full h-full">
+      <div className="w-full h-full" style={{ minHeight: height }}>
         <MonacoEditor
-          key={`${theme}-${language}`}
           height="100%"
           language={languageMap[language] || 'javascript'}
-          value={value || ''}
+          value={value ?? ''}
           onChange={handleChange}
           theme={theme}
           onMount={handleEditorDidMount}
@@ -132,6 +151,10 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
             acceptSuggestionOnEnter: 'on',
             quickSuggestions: true,
             suggestOnTriggerCharacters: true,
+            scrollbar: {
+              vertical: 'auto',
+              horizontal: 'auto',
+            },
           }}
         />
       </div>

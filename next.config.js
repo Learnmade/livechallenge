@@ -3,6 +3,15 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+      }
+    }
+    return config
+  },
   async headers() {
     return [
       {
@@ -40,11 +49,12 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob:",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: https:",
+              "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
-              "connect-src 'self' ws: wss: https://challenge.learn-made.in",
+              "connect-src 'self' ws: wss: https://challenge.learn-made.in blob:",
+              "worker-src 'self' blob:",
               "frame-ancestors 'self'",
             ].join('; ')
           }
