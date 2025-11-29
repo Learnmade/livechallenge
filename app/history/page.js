@@ -7,18 +7,22 @@ import Link from 'next/link'
 import { Clock, Trophy, CheckCircle, XCircle, Code } from 'lucide-react'
 
 export default function HistoryPage() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const [submissions, setSubmissions] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!user) {
+    // Wait for auth check to complete before redirecting
+    if (!authLoading && !user) {
       router.push('/')
       return
     }
-    fetchSubmissions()
-  }, [user, router])
+    // Only fetch submissions if user is authenticated
+    if (!authLoading && user) {
+      fetchSubmissions()
+    }
+  }, [user, authLoading, router])
 
   const fetchSubmissions = async () => {
     try {
@@ -66,10 +70,26 @@ export default function HistoryPage() {
     return icons[language] || '💻'
   }
 
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="text-gray-600 mt-4">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Redirect if not authenticated (handled by useEffect, but show loading while redirecting)
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
-        <div className="text-gray-900">Loading...</div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="text-gray-600 mt-4">Redirecting...</p>
+        </div>
       </div>
     )
   }

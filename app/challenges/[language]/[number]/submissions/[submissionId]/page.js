@@ -8,7 +8,7 @@ import { CheckCircle, XCircle, Clock, Trophy, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 export default function SubmissionReviewPage() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const params = useParams()
   const { language, number, submissionId } = params
@@ -19,7 +19,9 @@ export default function SubmissionReviewPage() {
   const fetchSubmission = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/challenges/${language}/${number}/submissions/${submissionId}`)
+      const response = await fetch(`/api/challenges/${language}/${number}/submissions/${submissionId}`, {
+        credentials: 'include',
+      })
       if (response.ok) {
         const data = await response.json()
         setSubmission(data.submission)
@@ -32,12 +34,40 @@ export default function SubmissionReviewPage() {
   }, [language, number, submissionId])
 
   useEffect(() => {
-    if (!user) {
+    // Wait for auth check to complete before redirecting
+    if (!authLoading && !user) {
       router.push('/login')
       return
     }
-    fetchSubmission()
-  }, [user, router, fetchSubmission])
+    // Only fetch submission if user is authenticated
+    if (!authLoading && user) {
+      fetchSubmission()
+    }
+  }, [user, authLoading, router, fetchSubmission])
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="text-gray-600 mt-4">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Redirect if not authenticated (handled by useEffect, but show loading while redirecting)
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="text-gray-600 mt-4">Redirecting...</p>
+        </div>
+      </div>
+    )
+  }
 
   if (loading) {
     return (

@@ -168,52 +168,53 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
       style={{ height: isFullscreen ? '100vh' : height }}
     >
       {/* VS Code-like Title Bar */}
-      <div className={`flex items-center justify-between px-4 py-2 ${isDark ? 'bg-[#2d2d30] border-b border-gray-700' : 'bg-[#f3f3f3] border-b border-gray-200'}`}>
-        <div className="flex items-center space-x-3 flex-1 min-w-0">
-          <div className="flex items-center space-x-2">
-            <FileCode className={`h-4 w-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
-            <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+      <div className={`flex items-center justify-between px-3 sm:px-4 py-2 ${isDark ? 'bg-[#2d2d30] border-b border-gray-700' : 'bg-[#f3f3f3] border-b border-gray-200'}`}>
+        <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
+          <div className="flex items-center space-x-1.5 sm:space-x-2 min-w-0">
+            <FileCode className={`h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0 ${isDark ? 'text-gray-400' : 'text-gray-600'}`} />
+            <span className={`text-xs sm:text-sm font-medium truncate ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
               {fileName}.{languageMap[language] || 'js'}
             </span>
           </div>
-          <div className={`text-xs px-2 py-0.5 rounded ${isDark ? 'bg-[#1e1e1e] text-gray-400' : 'bg-gray-200 text-gray-600'}`}>
-            {languageMap[language]?.toUpperCase() || 'JAVASCRIPT'}
+          <div className={`text-xs px-1.5 sm:px-2 py-0.5 rounded flex-shrink-0 ${isDark ? 'bg-[#1e1e1e] text-gray-400' : 'bg-gray-200 text-gray-600'}`}>
+            <span className="hidden sm:inline">{languageMap[language]?.toUpperCase() || 'JAVASCRIPT'}</span>
+            <span className="sm:hidden">{languageMap[language]?.toUpperCase().slice(0, 3) || 'JS'}</span>
           </div>
         </div>
         
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
           {showThemeToggle && !readOnly && (
             <button
               type="button"
               onClick={toggleTheme}
-              className={`p-1.5 rounded hover:bg-opacity-20 ${isDark ? 'hover:bg-white text-gray-400 hover:text-white' : 'hover:bg-gray-800 text-gray-600 hover:text-gray-900'} transition-colors`}
+              className={`p-1 sm:p-1.5 rounded hover:bg-opacity-20 ${isDark ? 'hover:bg-white text-gray-400 hover:text-white' : 'hover:bg-gray-800 text-gray-600 hover:text-gray-900'} transition-colors`}
               title={isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
             >
-              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              {isDark ? <Sun className="h-3 w-3 sm:h-4 sm:w-4" /> : <Moon className="h-3 w-3 sm:h-4 sm:w-4" />}
             </button>
           )}
           <button
             type="button"
             onClick={() => setShowSettings(!showSettings)}
-            className={`p-1.5 rounded hover:bg-opacity-20 ${isDark ? 'hover:bg-white text-gray-400 hover:text-white' : 'hover:bg-gray-800 text-gray-600 hover:text-gray-900'} transition-colors`}
+            className={`p-1 sm:p-1.5 rounded hover:bg-opacity-20 ${isDark ? 'hover:bg-white text-gray-400 hover:text-white' : 'hover:bg-gray-800 text-gray-600 hover:text-gray-900'} transition-colors`}
             title="Editor Settings"
           >
-            <Settings className="h-4 w-4" />
+            <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
           </button>
           <button
             type="button"
             onClick={toggleFullscreen}
-            className={`p-1.5 rounded hover:bg-opacity-20 ${isDark ? 'hover:bg-white text-gray-400 hover:text-white' : 'hover:bg-gray-800 text-gray-600 hover:text-gray-900'} transition-colors`}
+            className={`p-1 sm:p-1.5 rounded hover:bg-opacity-20 ${isDark ? 'hover:bg-white text-gray-400 hover:text-white' : 'hover:bg-gray-800 text-gray-600 hover:text-gray-900'} transition-colors`}
             title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
           >
-            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            {isFullscreen ? <Minimize2 className="h-3 w-3 sm:h-4 sm:w-4" /> : <Maximize2 className="h-3 w-3 sm:h-4 sm:w-4" />}
           </button>
         </div>
       </div>
 
       {/* Settings Panel */}
       {showSettings && (
-        <div className={`absolute top-10 right-2 z-30 ${isDark ? 'bg-[#252526] border-gray-700' : 'bg-white border-gray-200'} border rounded-lg shadow-2xl p-4 min-w-[200px]`}>
+        <div className={`absolute top-10 right-2 z-30 ${isDark ? 'bg-[#252526] border-gray-700' : 'bg-white border-gray-200'} border rounded-lg shadow-2xl p-3 sm:p-4 min-w-[180px] sm:min-w-[200px]`}>
           <div className="space-y-3">
             <div>
               <label className={`text-xs font-medium block mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -322,15 +323,15 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
       </div>
 
       {/* Status Bar */}
-      <div className={`flex items-center justify-between px-4 py-1 text-xs ${isDark ? 'bg-[#007acc] text-white' : 'bg-[#f3f3f3] text-gray-700'} border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-        <div className="flex items-center space-x-4">
-          <span className="font-medium">{languageMap[language]?.toUpperCase() || 'JAVASCRIPT'}</span>
-          <span>Spaces: 2</span>
-          <span>UTF-8</span>
+      <div className={`flex items-center justify-between px-2 sm:px-4 py-1 text-xs ${isDark ? 'bg-[#007acc] text-white' : 'bg-[#f3f3f3] text-gray-700'} border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+        <div className="flex items-center space-x-2 sm:space-x-4 min-w-0">
+          <span className="font-medium truncate">{languageMap[language]?.toUpperCase() || 'JAVASCRIPT'}</span>
+          <span className="hidden sm:inline">Spaces: 2</span>
+          <span className="hidden md:inline">UTF-8</span>
         </div>
-        <div className="flex items-center space-x-4">
-          {value && <span>{value.split('\n').length} lines</span>}
-          <span>{value ? value.length : 0} characters</span>
+        <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+          {value && <span className="hidden sm:inline">{value.split('\n').length} lines</span>}
+          <span>{value ? value.length : 0} chars</span>
         </div>
       </div>
     </div>

@@ -8,15 +8,16 @@ import { Play, Square, Plus, Settings, Users, TrendingUp } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function AdminPage() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const { activeBattle, setActiveBattle, socket } = useBattle()
   const router = useRouter()
   
   useEffect(() => {
-    if (!user || !user.isHost) {
+    // Wait for auth check to complete before redirecting
+    if (!authLoading && (!user || !user.isHost)) {
       router.push('/')
     }
-  }, [user, router])
+  }, [user, authLoading, router])
   const [isCreating, setIsCreating] = useState(false)
   const [isSeeding, setIsSeeding] = useState(false)
   const [newBattle, setNewBattle] = useState({
@@ -39,17 +40,28 @@ export default function AdminPage() {
     },
   })
 
-  // Loading state - will redirect in useEffect if not authorized
-  if (!user) {
+  // Show loading state while checking authentication
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
-        <div className="text-gray-900">Loading...</div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="text-gray-600 mt-4">Loading...</p>
+        </div>
       </div>
     )
   }
-  
-  if (!user.isHost) {
-    return null // useEffect will handle redirect
+
+  // Redirect if not authenticated or not host (handled by useEffect, but show loading while redirecting)
+  if (!user || !user.isHost) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="text-gray-600 mt-4">Redirecting...</p>
+        </div>
+      </div>
+    )
   }
 
   const handleStartBattle = () => {

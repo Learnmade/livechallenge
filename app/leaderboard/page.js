@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Trophy, Medal, Award, TrendingUp, Users, Zap, Target, Crown, ArrowLeft, Filter } from 'lucide-react'
 import toast from 'react-hot-toast'
+import Navigation from '@/components/Navigation'
 
 const languages = [
   { id: 'all', name: 'All Languages', icon: '🌐' },
@@ -20,7 +21,7 @@ const languages = [
 ]
 
 export default function LeaderboardPage() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const [leaderboard, setLeaderboard] = useState([])
   const [loading, setLoading] = useState(true)
@@ -59,12 +60,16 @@ export default function LeaderboardPage() {
   }, [selectedLanguage, timeFilter])
 
   useEffect(() => {
-    if (!user) {
+    // Wait for auth check to complete before redirecting
+    if (!authLoading && !user) {
       router.push('/login')
       return
     }
-    fetchLeaderboard()
-  }, [user, router, fetchLeaderboard])
+    // Only fetch leaderboard if user is authenticated
+    if (!authLoading && user) {
+      fetchLeaderboard()
+    }
+  }, [user, authLoading, router, fetchLeaderboard])
 
   const getRankIcon = (rank) => {
     if (rank === 1) return <Crown className="h-6 w-6 text-yellow-500" />
@@ -86,39 +91,39 @@ export default function LeaderboardPage() {
     return rank > 0 ? rank : null
   }
 
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="text-gray-600 mt-4">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Redirect if not authenticated (handled by useEffect, but show loading while redirecting)
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="text-gray-600 mt-4">Redirecting...</p>
+        </div>
+      </div>
+    )
+  }
+
   const userRank = getUserRank()
   const topThree = leaderboard.slice(0, 3)
   const rest = leaderboard.slice(3)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
-      {/* Header */}
-      <nav className="border-b border-gray-200 bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center space-x-2">
-              <Trophy className="h-8 w-8 text-primary-600" />
-              <span className="text-xl font-bold text-gray-900">Leaderboard</span>
-            </Link>
-            <div className="flex items-center space-x-4">
-              <Link href="/challenges" className="text-gray-600 hover:text-primary-600 transition-colors font-medium">
-                Challenges
-              </Link>
-              <Link href="/dashboard" className="text-gray-600 hover:text-primary-600 transition-colors font-medium">
-                Dashboard
-              </Link>
-              <div className="flex items-center space-x-2">
-                <div className="h-8 w-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-semibold">
-                  {user?.name?.charAt(0).toUpperCase()}
-                </div>
-                <span className="text-gray-900 font-medium">{user?.name}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navigation />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Hero Section */}
         <div className="mb-8">
           <div className="bg-gradient-to-r from-primary-600 to-blue-700 rounded-2xl p-8 text-white shadow-xl mb-6">
@@ -142,10 +147,10 @@ export default function LeaderboardPage() {
             <Filter className="h-5 w-5 text-gray-600" />
             <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
           </div>
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Programming Language</label>
-              <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
                 {languages.map((lang) => (
                   <button
                     key={lang.id}

@@ -10,9 +10,10 @@ import ChallengeLeaderboard from '@/components/ChallengeLeaderboard'
 import ProblemDisplay from '@/components/ProblemDisplay'
 import { Play, CheckCircle, XCircle, Users, Trophy, Clock, Code as CodeIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
+import Navigation from '@/components/Navigation'
 
 export default function ChallengePage() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const params = useParams()
   const { language, number } = params
@@ -80,22 +81,26 @@ export default function ChallengePage() {
   }, [language, number])
 
   useEffect(() => {
-    if (!user) {
+    // Wait for auth check to complete before redirecting
+    if (!authLoading && !user) {
       router.push('/login')
       return
     }
-    fetchChallenge()
-    fetchParticipants()
-    fetchLeaderboard()
-    
-    // Set up polling for live updates
-    const interval = setInterval(() => {
+    // Only fetch data if user is authenticated
+    if (!authLoading && user) {
+      fetchChallenge()
       fetchParticipants()
       fetchLeaderboard()
-    }, 5000) // Update every 5 seconds
+      
+      // Set up polling for live updates
+      const interval = setInterval(() => {
+        fetchParticipants()
+        fetchLeaderboard()
+      }, 5000) // Update every 5 seconds
 
-    return () => clearInterval(interval)
-  }, [user, router, fetchChallenge, fetchParticipants, fetchLeaderboard])
+      return () => clearInterval(interval)
+    }
+  }, [user, authLoading, router, fetchChallenge, fetchParticipants, fetchLeaderboard])
 
   const handleRun = async () => {
     if (!code.trim()) {
@@ -170,6 +175,30 @@ export default function ChallengePage() {
     }
   }
 
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="text-gray-600 mt-4">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Redirect if not authenticated (handled by useEffect, but show loading while redirecting)
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="text-gray-600 mt-4">Redirecting...</p>
+        </div>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
@@ -193,15 +222,17 @@ export default function ChallengePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
+      <Navigation />
+      
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+      <div className="bg-white border-b border-gray-200 shadow-sm sticky top-16 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 truncate">
                 Challenge #{challenge.challengeNumber}: {challenge.title}
               </h1>
-              <div className="flex items-center space-x-4 mt-2">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2">
                 <span className={`px-2 py-1 rounded text-xs font-medium ${
                   challenge.difficulty === 'easy' ? 'bg-green-50 text-green-700 border border-green-200' :
                   challenge.difficulty === 'medium' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
@@ -209,30 +240,30 @@ export default function ChallengePage() {
                 }`}>
                   {challenge.difficulty}
                 </span>
-                <span className="text-gray-600 text-sm flex items-center">
-                  <Trophy className="h-4 w-4 mr-1 text-yellow-500" />
+                <span className="text-gray-600 text-xs sm:text-sm flex items-center">
+                  <Trophy className="h-3 w-3 sm:h-4 sm:w-4 mr-1 text-yellow-500" />
                   {challenge.points} points
                 </span>
-                <span className="text-gray-600 text-sm flex items-center">
-                  <Users className="h-4 w-4 mr-1 text-primary-600" />
+                <span className="text-gray-600 text-xs sm:text-sm flex items-center">
+                  <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1 text-primary-600" />
                   {participants.length} active
                 </span>
               </div>
             </div>
             <button
               onClick={() => router.push('/challenges')}
-              className="text-gray-600 hover:text-primary-600 transition-colors font-medium"
+              className="text-gray-600 hover:text-primary-600 transition-colors font-medium text-sm sm:text-base whitespace-nowrap"
             >
-              ← Back to Challenges
+              ← Back
             </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid lg:grid-cols-4 gap-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <div className="grid lg:grid-cols-4 gap-4 sm:gap-6">
           {/* Left Column - Problem & Editor */}
-          <div className="lg:col-span-3 space-y-6">
+          <div className="lg:col-span-3 space-y-4 sm:space-y-6">
             {/* Problem Description */}
             <ProblemDisplay problem={challenge} />
 
@@ -246,15 +277,15 @@ export default function ChallengePage() {
                     setCode(value)
                   }
                 }}
-                height="500px"
+                height="400px"
                 showThemeToggle={true}
                 fileName={`challenge-${number}`}
               />
-              <div className="bg-gray-50 px-4 py-3 border-t border-gray-200 flex items-center space-x-3">
+              <div className="bg-gray-50 px-3 sm:px-4 py-2.5 sm:py-3 border-t border-gray-200 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                 <button
                   onClick={handleRun}
                   disabled={isRunning || isSubmitting}
-                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-semibold transition-colors flex items-center space-x-2 shadow-sm"
+                  className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 sm:px-6 py-2 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2 shadow-sm text-sm sm:text-base"
                 >
                   <Play className="h-4 w-4" />
                   <span>{isRunning ? 'Running...' : 'Run Code'}</span>
@@ -262,7 +293,7 @@ export default function ChallengePage() {
                 <button
                   onClick={handleSubmit}
                   disabled={isSubmitting || isRunning}
-                  className="bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-semibold transition-colors flex items-center space-x-2 shadow-sm"
+                  className="flex-1 sm:flex-none bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 sm:px-6 py-2 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2 shadow-sm text-sm sm:text-base"
                 >
                   {isSubmitting ? (
                     <>
@@ -288,7 +319,7 @@ export default function ChallengePage() {
           </div>
 
           {/* Right Column - Live Participants & Leaderboard */}
-          <div className="lg:col-span-1 space-y-6">
+          <div className="lg:col-span-1 space-y-4 sm:space-y-6">
             <LiveParticipants participants={participants} />
             <ChallengeLeaderboard 
               leaderboard={leaderboard}
