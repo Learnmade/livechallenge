@@ -227,20 +227,53 @@ const getExamples = (title) => {
 const getTestCases = (title) => {
   const testCases = {
     'Two Sum': [
-      { input: '[2,7,11,15]\n9', expectedOutput: '[0,1]' },
-      { input: '[3,2,4]\n6', expectedOutput: '[1,2]' },
+      { input: '[2,7,11,15]\n9', expectedOutput: '[0,1]', isHidden: false },
+      { input: '[3,2,4]\n6', expectedOutput: '[1,2]', isHidden: false },
+      { input: '[3,3]\n6', expectedOutput: '[0,1]', isHidden: false },
     ],
     'Reverse String': [
-      { input: '["h","e","l","l","o"]', expectedOutput: '["o","l","l","e","h"]' },
+      { input: '["h","e","l","l","o"]', expectedOutput: '["o","l","l","e","h"]', isHidden: false },
+      { input: '["H","a","n","n","a","h"]', expectedOutput: '["h","a","n","n","a","H"]', isHidden: false },
     ],
     'Valid Palindrome': [
-      { input: '"A man, a plan, a canal: Panama"', expectedOutput: 'true' },
-      { input: '"race a car"', expectedOutput: 'false' },
+      { input: '"A man, a plan, a canal: Panama"', expectedOutput: 'true', isHidden: false },
+      { input: '"race a car"', expectedOutput: 'false', isHidden: false },
+      { input: '" "', expectedOutput: 'true', isHidden: false },
+    ],
+    'Longest Substring': [
+      { input: '"abcabcbb"', expectedOutput: '3', isHidden: false },
+      { input: '"bbbbb"', expectedOutput: '1', isHidden: false },
+      { input: '"pwwkew"', expectedOutput: '3', isHidden: false },
+    ],
+    'Container With Most Water': [
+      { input: '[1,8,6,2,5,4,8,3,7]', expectedOutput: '49', isHidden: false },
+      { input: '[1,1]', expectedOutput: '1', isHidden: false },
+    ],
+    'Three Sum': [
+      { input: '[-1,0,1,2,-1,-4]', expectedOutput: '[[-1,-1,2],[-1,0,1]]', isHidden: false },
+      { input: '[0,1,1]', expectedOutput: '[]', isHidden: false },
+    ],
+    'Merge Intervals': [
+      { input: '[[1,3],[2,6],[8,10],[15,18]]', expectedOutput: '[[1,6],[8,10],[15,18]]', isHidden: false },
+      { input: '[[1,4],[4,5]]', expectedOutput: '[[1,5]]', isHidden: false },
+    ],
+    'Best Time to Buy and Sell Stock': [
+      { input: '[7,1,5,3,6,4]', expectedOutput: '5', isHidden: false },
+      { input: '[7,6,4,3,1]', expectedOutput: '0', isHidden: false },
+    ],
+    'Valid Parentheses': [
+      { input: '"()"', expectedOutput: 'true', isHidden: false },
+      { input: '"()[]{}"', expectedOutput: 'true', isHidden: false },
+      { input: '"(]"', expectedOutput: 'false', isHidden: false },
+    ],
+    'Trapping Rain Water': [
+      { input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expectedOutput: '6', isHidden: false },
+      { input: '[4,2,0,3,2,5]', expectedOutput: '9', isHidden: false },
     ],
   }
   return testCases[title] || [
-    { input: 'test1', expectedOutput: 'output1' },
-    { input: 'test2', expectedOutput: 'output2' },
+    { input: 'test1', expectedOutput: 'output1', isHidden: false },
+    { input: 'test2', expectedOutput: 'output2', isHidden: false },
   ]
 }
 
@@ -277,13 +310,18 @@ export async function POST(request) {
           const challengeNumber = i + 1
           const baseSlug = generateSlug(template.title)
           
-          // Ensure slug is unique across all languages
+          // Ensure slug is unique for this language
           let slug = baseSlug
           let counter = 1
           const languageSlugKey = `${language}:${slug}`
           
+          // Check if this slug already exists for this language
           while (existingSlugs.has(languageSlugKey)) {
             slug = `${baseSlug}-${counter}`
+            const newKey = `${language}:${slug}`
+            if (!existingSlugs.has(newKey)) {
+              break
+            }
             counter++
           }
           existingSlugs.add(`${language}:${slug}`)
@@ -302,23 +340,37 @@ export async function POST(request) {
           // Validate test cases
           if (!testCases || testCases.length === 0) {
             console.warn(`⚠️  Warning: No test cases for ${language} challenge "${template.title}"`)
+            // Don't fail, but log it
           }
 
-          // Create challenge
-          const challenge = await Challenge.create({
+          // Validate slug is not empty
+          if (!slug || slug.trim() === '') {
+            throw new Error(`Generated slug is empty for "${template.title}"`)
+          }
+
+          // Prepare challenge data
+          const challengeData = {
             title: template.title,
             description: description,
             difficulty: template.difficulty,
             language: language,
             challengeNumber: challengeNumber,
-            slug: slug,
-            examples: examples,
+            slug: slug.toLowerCase().trim(),
+            examples: examples || [],
             constraints: ['1 <= n <= 10^5'],
-            starterCode: starterCode,
-            testCases: testCases,
+            starterCode: starterCode || '',
+            testCases: testCases || [],
             points: template.points,
             isActive: true,
-          })
+          }
+
+          // Log challenge data for debugging (first challenge only)
+          if (totalCreated === 0 && i === 0) {
+            console.log('📝 Sample challenge data:', JSON.stringify(challengeData, null, 2))
+          }
+
+          // Create challenge
+          const challenge = await Challenge.create(challengeData)
 
           totalCreated++
           languageCreated++
@@ -336,23 +388,51 @@ export async function POST(request) {
           const errorMsg = `${language} challenge ${i + 1} (${templates[i]?.title || 'Unknown'}): ${error.message}`
           errors.push(errorMsg)
           console.error(`❌ Error creating ${errorMsg}`)
+          console.error('Error details:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+            code: error.code,
+            keyPattern: error.keyPattern,
+            keyValue: error.keyValue,
+          })
+          
+          // If it's a validation error, log the validation errors
+          if (error.name === 'ValidationError') {
+            console.error('Validation errors:', error.errors)
+          }
         }
       }
 
       console.log(`📊 ${language}: ${languageCreated} created, ${languageErrors} errors`)
     }
 
+    // Verify challenges were actually created in database
+    const actualCount = await Challenge.countDocuments({})
+    const countByLanguage = {}
+    for (const lang of languages) {
+      countByLanguage[lang] = await Challenge.countDocuments({ language: lang })
+    }
+
     const duration = Date.now() - startTime
     const summary = {
-      success: totalErrors === 0,
+      success: totalErrors === 0 && actualCount === totalCreated,
       totalCreated,
+      actualCountInDB: actualCount,
       totalErrors,
       languagesProcessed: languages.length,
       challengesPerLanguage: challengeTemplates[languages[0]]?.length || 0,
       duration: `${(duration / 1000).toFixed(2)}s`,
       deleted: deleteResult.deletedCount,
+      countByLanguage,
       created: created.slice(0, 10), // Show first 10 created challenges
       errors: errors.slice(0, 10), // Show first 10 errors
+    }
+
+    // Log verification
+    console.log(`📊 Verification: Created ${totalCreated}, DB has ${actualCount} challenges`)
+    if (actualCount !== totalCreated) {
+      console.warn(`⚠️  Warning: Mismatch between created count (${totalCreated}) and DB count (${actualCount})`)
     }
 
     if (totalErrors > 0) {
