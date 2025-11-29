@@ -9,7 +9,7 @@ const MonacoEditor = dynamic(
   { ssr: false }
 )
 
-export default function CodeEditor({ language, value, onChange, theme = 'vs-dark' }) {
+export default function CodeEditor({ language, value, onChange, theme = 'vs-dark', height = '500px', readOnly = false }) {
   const editorRef = useRef(null)
 
   const handleEditorDidMount = (editor, monaco) => {
@@ -40,10 +40,14 @@ export default function CodeEditor({ language, value, onChange, theme = 'vs-dark
     python: 'python',
     cpp: 'cpp',
     java: 'java',
+    go: 'go',
+    rust: 'rust',
+    csharp: 'csharp',
+    typescript: 'typescript',
   }
 
   return (
-    <div className="h-[500px] w-full">
+    <div style={{ height }} className="w-full">
       <MonacoEditor
         height="100%"
         language={languageMap[language] || 'javascript'}
@@ -62,8 +66,8 @@ export default function CodeEditor({ language, value, onChange, theme = 'vs-dark
           lineNumbers: 'on',
           roundedSelection: false,
           cursorStyle: 'line',
-          readOnly: false,
-          contextmenu: true,
+          readOnly: readOnly,
+          contextmenu: !readOnly,
         }}
       />
     </div>

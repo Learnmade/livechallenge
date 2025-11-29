@@ -37,7 +37,7 @@ export default function LoginPage() {
       }
 
       if (result.success) {
-        router.push('/dashboard')
+        router.push('/challenges')
       }
     } catch (error) {
       console.error('Auth error:', error)

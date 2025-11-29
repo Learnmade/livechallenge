@@ -81,19 +81,19 @@ export default function DashboardPage() {
         {/* Quick Actions */}
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           <Link
-            href="/battle"
+            href="/challenges"
             className="bg-gradient-to-r from-primary-600 to-purple-600 rounded-xl p-6 hover:shadow-2xl transition-all transform hover:scale-[1.02]"
           >
-            <h2 className="text-2xl font-bold text-white mb-2">Join Active Battle</h2>
-            <p className="text-gray-200">Participate in the current coding challenge</p>
+            <h2 className="text-2xl font-bold text-white mb-2">Start Challenges</h2>
+            <p className="text-gray-200">Solve coding challenges in multiple languages</p>
           </Link>
 
           <Link
             href="/history"
             className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 hover:border-primary-500 transition-all"
           >
-            <h2 className="text-2xl font-bold text-white mb-2">Battle History</h2>
-            <p className="text-gray-400">View your past battles and solutions</p>
+            <h2 className="text-2xl font-bold text-white mb-2">Submission History</h2>
+            <p className="text-gray-400">View your past submissions and solutions</p>
           </Link>
         </div>
 
