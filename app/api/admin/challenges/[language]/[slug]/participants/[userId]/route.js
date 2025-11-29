@@ -4,6 +4,7 @@ import Challenge from '@/models/Challenge'
 import ChallengeSubmission from '@/models/ChallengeSubmission'
 import connectDB from '@/lib/mongodb'
 import mongoose from 'mongoose'
+import { findChallengeBySlugOrNumber } from '@/lib/challengeHelper'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,14 +16,10 @@ export async function DELETE(request, { params }) {
     const admin = await requireHost(request)
     await connectDB()
 
-    const { language, number, userId } = params
-    const challengeNumber = parseInt(number)
+    const { language, slug, userId } = params
 
-    const challenge = await Challenge.findOne({
-      language,
-      challengeNumber,
-      isActive: true,
-    })
+    // Get challenge by slug or number
+    const challenge = await findChallengeBySlugOrNumber(language, slug)
 
     if (!challenge) {
       return NextResponse.json(

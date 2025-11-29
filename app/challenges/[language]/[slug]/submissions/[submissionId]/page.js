@@ -11,7 +11,7 @@ export default function SubmissionReviewPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const params = useParams()
-  const { language, number, submissionId } = params
+  const { language, slug: slugOrNumber, submissionId } = params
 
   const [submission, setSubmission] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -19,7 +19,7 @@ export default function SubmissionReviewPage() {
   const fetchSubmission = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/challenges/${language}/${number}/submissions/${submissionId}`, {
+      const response = await fetch(`/api/challenges/${language}/${slugOrNumber}/submissions/${submissionId}`, {
         credentials: 'include',
       })
       if (response.ok) {
@@ -31,7 +31,7 @@ export default function SubmissionReviewPage() {
     } finally {
       setLoading(false)
     }
-  }, [language, number, submissionId])
+  }, [language, slugOrNumber, submissionId])
 
   useEffect(() => {
     // Wait for auth check to complete before redirecting
@@ -94,7 +94,7 @@ export default function SubmissionReviewPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link
-          href={`/challenges/${language}/${number}`}
+          href={`/challenges/${language}/${submission?.challengeId?.slug || slugOrNumber}`}
           className="inline-flex items-center space-x-2 text-gray-600 hover:text-primary-600 mb-6 transition-colors font-medium"
         >
           <ArrowLeft className="h-4 w-4" />

@@ -3,6 +3,7 @@ import { requireAuth } from '@/lib/auth'
 import Challenge from '@/models/Challenge'
 import ChallengeSubmission from '@/models/ChallengeSubmission'
 import connectDB from '@/lib/mongodb'
+import { findChallengeBySlugOrNumber } from '@/lib/challengeHelper'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,14 +12,10 @@ export async function GET(request, { params }) {
     await requireAuth(request)
     await connectDB()
 
-    const { language, number } = params
-    const challengeNumber = parseInt(number)
+    const { language, slug } = params
 
-    const challenge = await Challenge.findOne({
-      language,
-      challengeNumber,
-      isActive: true,
-    })
+    // Get challenge by slug or number
+    const challenge = await findChallengeBySlugOrNumber(language, slug)
 
     if (!challenge) {
       return NextResponse.json(

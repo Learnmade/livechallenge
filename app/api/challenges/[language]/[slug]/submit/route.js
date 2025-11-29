@@ -6,6 +6,7 @@ import ChallengeSubmission from '@/models/ChallengeSubmission'
 import { updateUser } from '@/lib/db'
 import connectDB from '@/lib/mongodb'
 import mongoose from 'mongoose'
+import { findChallengeBySlugOrNumber } from '@/lib/challengeHelper'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,8 +15,7 @@ export async function POST(request, { params }) {
     const user = await requireAuth(request)
     await connectDB()
 
-    const { language, number } = params
-    const challengeNumber = parseInt(number)
+    const { language, slug } = params
     const body = await request.json()
     const { code } = body
 
@@ -26,12 +26,8 @@ export async function POST(request, { params }) {
       )
     }
 
-    // Get challenge
-    const challenge = await Challenge.findOne({
-      language,
-      challengeNumber,
-      isActive: true,
-    })
+    // Get challenge by slug or number
+    const challenge = await findChallengeBySlugOrNumber(language, slug)
 
     if (!challenge) {
       return NextResponse.json(

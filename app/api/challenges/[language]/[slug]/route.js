@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
 import Challenge from '@/models/Challenge'
 import connectDB from '@/lib/mongodb'
+import { findChallengeBySlugOrNumber } from '@/lib/challengeHelper'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,14 +11,10 @@ export async function GET(request, { params }) {
     const user = await requireAuth(request)
     await connectDB()
 
-    const { language, number } = params
-    const challengeNumber = parseInt(number)
-
-    const challenge = await Challenge.findOne({
-      language,
-      challengeNumber,
-      isActive: true,
-    })
+    const { language, slug } = params
+    
+    // Get challenge by slug or number (for backward compatibility)
+    const challenge = await findChallengeBySlugOrNumber(language, slug)
 
     if (!challenge) {
       return NextResponse.json(
@@ -35,6 +32,12 @@ export async function GET(request, { params }) {
     const challengeObj = challenge.toObject()
     challengeObj.id = challengeObj._id.toString()
     delete challengeObj._id
+    
+    // Ensure slug exists
+    if (!challengeObj.slug) {
+      challengeObj.slug = `challenge-${challengeObj.challengeNumber}`
+    }
+    
     // Don't send test cases or solution to client
     delete challengeObj.testCases
     delete challengeObj.solution

@@ -254,7 +254,7 @@ export default function ChallengesPage() {
               {challenges.map((challenge) => (
                 <Link
                   key={challenge.id}
-                  href={`/challenges/${challenge.language}/${challenge.challengeNumber}`}
+                  href={`/challenges/${challenge.language}/${challenge.slug || challenge.challengeNumber}`}
                   className="group bg-white rounded-xl sm:rounded-2xl border-2 border-gray-200 p-4 sm:p-6 hover:border-primary-400 hover:shadow-xl transition-all transform hover:scale-[1.01] sm:hover:scale-[1.02] shadow-lg"
                 >
                   <div className="flex flex-col sm:flex-row items-start justify-between gap-4">

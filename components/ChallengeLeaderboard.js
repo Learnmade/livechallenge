@@ -3,7 +3,7 @@
 import { Trophy, Medal, Award, CheckCircle, Clock, Eye } from 'lucide-react'
 import Link from 'next/link'
 
-export default function ChallengeLeaderboard({ leaderboard = [], language, challengeNumber }) {
+export default function ChallengeLeaderboard({ leaderboard = [], language, challengeNumber, challengeSlug }) {
   const getRankIcon = (rank) => {
     if (rank === 1) return <Trophy className="h-5 w-5 text-yellow-500" />
     if (rank === 2) return <Medal className="h-5 w-5 text-gray-400" />
@@ -76,9 +76,9 @@ export default function ChallengeLeaderboard({ leaderboard = [], language, chall
                     </div>
                   )}
 
-                  {entry.submissionId && language && challengeNumber && (
+                  {entry.submissionId && language && (challengeSlug || challengeNumber) && (
                     <Link
-                      href={`/challenges/${language}/${challengeNumber}/submissions/${entry.submissionId}`}
+                      href={`/challenges/${language}/${challengeSlug || challengeNumber}/submissions/${entry.submissionId}`}
                       className="mt-2 inline-flex items-center space-x-1 text-xs text-primary-600 hover:text-primary-700 transition-colors"
                     >
                       <Eye className="h-3 w-3" />

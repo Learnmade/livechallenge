@@ -15,7 +15,7 @@ export default function AdminPage() {
   const [isCreating, setIsCreating] = useState(false)
   const [isSeeding, setIsSeeding] = useState(false)
   const [showParticipants, setShowParticipants] = useState(false)
-  const [selectedChallenge, setSelectedChallenge] = useState({ language: 'javascript', number: '1' })
+  const [selectedChallenge, setSelectedChallenge] = useState({ language: 'javascript', slug: 'two-sum' })
   const [participants, setParticipants] = useState([])
   const [loadingParticipants, setLoadingParticipants] = useState(false)
   const [challenges, setChallenges] = useState([])
@@ -56,12 +56,12 @@ export default function AdminPage() {
 
   // Fetch participants with timing
   const fetchParticipants = useCallback(async () => {
-    if (!selectedChallenge.language || !selectedChallenge.number) return
+    if (!selectedChallenge.language || !selectedChallenge.slug) return
 
     setLoadingParticipants(true)
     try {
       const response = await fetch(
-        `/api/admin/challenges/${selectedChallenge.language}/${selectedChallenge.number}/participants`,
+        `/api/admin/challenges/${selectedChallenge.language}/${selectedChallenge.slug}/participants`,
         {
           credentials: 'include',
         }
@@ -92,7 +92,7 @@ export default function AdminPage() {
 
     try {
       const response = await fetch(
-        `/api/admin/challenges/${selectedChallenge.language}/${selectedChallenge.number}/participants/${userId}`,
+        `/api/admin/challenges/${selectedChallenge.language}/${selectedChallenge.slug}/participants/${userId}`,
         {
           method: 'DELETE',
           credentials: 'include',
@@ -317,7 +317,7 @@ export default function AdminPage() {
                   <select
                     value={selectedChallenge.language}
                     onChange={(e) => {
-                      setSelectedChallenge({ ...selectedChallenge, language: e.target.value, number: '1' })
+                      setSelectedChallenge({ ...selectedChallenge, language: e.target.value, slug: 'two-sum' })
                       setParticipants([])
                     }}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -334,20 +334,20 @@ export default function AdminPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Challenge Number
+                    Challenge Slug
                   </label>
                   <input
-                    type="number"
-                    min="1"
-                    max="10"
-                    value={selectedChallenge.number}
+                    type="text"
+                    value={selectedChallenge.slug}
                     onChange={(e) => {
-                      setSelectedChallenge({ ...selectedChallenge, number: e.target.value })
+                      setSelectedChallenge({ ...selectedChallenge, slug: e.target.value })
                       setParticipants([])
                     }}
                     onBlur={fetchParticipants}
+                    placeholder="e.g., two-sum"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Enter challenge slug (e.g., two-sum, reverse-string)</p>
                 </div>
                 <div className="flex items-end">
                   <button

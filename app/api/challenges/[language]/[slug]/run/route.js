@@ -10,7 +10,7 @@ export async function POST(request, { params }) {
     const user = await requireAuth(request)
     await connectDB()
 
-    const { language, number } = params
+    const { language, slug } = params
     const body = await request.json()
     const { code } = body
 

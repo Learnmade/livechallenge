@@ -168,7 +168,7 @@ export default function HistoryPage() {
                   </div>
                   {submission.submissionId && submission.challengeId && (
                     <Link
-                      href={`/challenges/${submission.language}/${submission.challengeNumber}/submissions/${submission.submissionId}`}
+                      href={`/challenges/${submission.language}/${submission.challengeSlug || submission.challengeNumber}/submissions/${submission.submissionId}`}
                       className="ml-4 text-primary-600 hover:text-primary-700 font-medium transition-colors"
                     >
                       View Solution →

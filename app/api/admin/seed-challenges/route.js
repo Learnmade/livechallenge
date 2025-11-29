@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireHost } from '@/lib/auth'
 import Challenge from '@/models/Challenge'
 import connectDB from '@/lib/mongodb'
+import { generateSlug } from '@/lib/slug'
 
 export const dynamic = 'force-dynamic'
 
@@ -257,9 +258,23 @@ export async function POST(request) {
     for (const language of languages) {
       const templates = challengeTemplates[language]
       
+      // Get existing slugs for this language to ensure uniqueness
+      const existingChallenges = await Challenge.find({ language })
+      const existingSlugs = existingChallenges.map(c => c.slug).filter(Boolean)
+      
       for (let i = 0; i < templates.length; i++) {
         const template = templates[i]
         const challengeNumber = i + 1
+        const baseSlug = generateSlug(template.title)
+        
+        // Ensure slug is unique for this language
+        let slug = baseSlug
+        let counter = 1
+        while (existingSlugs.includes(slug)) {
+          slug = `${baseSlug}-${counter}`
+          counter++
+        }
+        existingSlugs.push(slug)
 
         const challenge = await Challenge.create({
           title: template.title,
@@ -267,6 +282,7 @@ export async function POST(request) {
           difficulty: template.difficulty,
           language: language,
           challengeNumber: challengeNumber,
+          slug: slug,
           examples: getExamples(template.title),
           constraints: ['1 <= n <= 10^5'],
           starterCode: getStarterCode(language, challengeNumber),

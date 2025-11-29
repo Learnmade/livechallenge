@@ -16,7 +16,7 @@ export default function ChallengePage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const params = useParams()
-  const { language, number } = params || {}
+  const { language, slug: slugOrNumber } = params || {}
 
   const [challenge, setChallenge] = useState(null)
   const [code, setCode] = useState('')
@@ -31,7 +31,7 @@ export default function ChallengePage() {
   const [pageError, setPageError] = useState(null)
 
   const fetchChallenge = useCallback(async () => {
-    if (!language || !number) {
+    if (!language || !slugOrNumber) {
       setPageError('Invalid challenge parameters')
       setLoading(false)
       return
@@ -40,7 +40,7 @@ export default function ChallengePage() {
     try {
       setLoading(true)
       setPageError(null)
-      const response = await fetch(`/api/challenges/${language}/${number}`, {
+      const response = await fetch(`/api/challenges/${language}/${slugOrNumber}`, {
         credentials: 'include',
       })
       
@@ -69,13 +69,13 @@ export default function ChallengePage() {
     } finally {
       setLoading(false)
     }
-  }, [language, number])
+  }, [language, slugOrNumber])
 
   const fetchParticipants = useCallback(async () => {
-    if (!language || !number) return
+    if (!language || !slugOrNumber) return
     
     try {
-      const response = await fetch(`/api/challenges/${language}/${number}/participants`, {
+      const response = await fetch(`/api/challenges/${language}/${slugOrNumber}/participants`, {
         credentials: 'include',
       })
       if (response.ok) {
@@ -86,13 +86,13 @@ export default function ChallengePage() {
       console.error('Error fetching participants:', error)
       // Don't crash on participant fetch errors
     }
-  }, [language, number])
+  }, [language, slugOrNumber])
 
   const fetchLeaderboard = useCallback(async () => {
-    if (!language || !number) return
+    if (!language || !slugOrNumber) return
     
     try {
-      const response = await fetch(`/api/challenges/${language}/${number}/leaderboard`, {
+      const response = await fetch(`/api/challenges/${language}/${slugOrNumber}/leaderboard`, {
         credentials: 'include',
       })
       if (response.ok) {
@@ -103,7 +103,7 @@ export default function ChallengePage() {
       console.error('Error fetching leaderboard:', error)
       // Don't crash on leaderboard fetch errors
     }
-  }, [language, number])
+  }, [language, slugOrNumber])
 
   useEffect(() => {
     // Wait for auth check to complete before redirecting
@@ -112,14 +112,14 @@ export default function ChallengePage() {
       return
     }
     // Only fetch data if user is authenticated and params are available
-    if (!authLoading && user && language && number) {
+    if (!authLoading && user && language && slugOrNumber) {
       fetchChallenge()
       fetchParticipants()
       fetchLeaderboard()
       
       // Set up polling for live updates
       const interval = setInterval(() => {
-        if (language && number) {
+        if (language && slugOrNumber) {
           fetchParticipants()
           fetchLeaderboard()
         }
@@ -127,7 +127,7 @@ export default function ChallengePage() {
 
       return () => clearInterval(interval)
     }
-  }, [user, authLoading, router, language, number, fetchChallenge, fetchParticipants, fetchLeaderboard])
+  }, [user, authLoading, router, language, slugOrNumber, fetchChallenge, fetchParticipants, fetchLeaderboard])
 
   const handleRun = async () => {
     if (!code.trim()) {
@@ -135,7 +135,7 @@ export default function ChallengePage() {
       return
     }
 
-    if (!language || !number) {
+    if (!language || !slugOrNumber) {
       toast.error('Invalid challenge parameters')
       return
     }
@@ -145,7 +145,7 @@ export default function ChallengePage() {
     setError('')
 
     try {
-      const response = await fetch(`/api/challenges/${language}/${number}/run`, {
+      const response = await fetch(`/api/challenges/${language}/${slugOrNumber}/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -176,7 +176,7 @@ export default function ChallengePage() {
       return
     }
 
-    if (!language || !number) {
+    if (!language || !slugOrNumber) {
       toast.error('Invalid challenge parameters')
       return
     }
@@ -187,7 +187,7 @@ export default function ChallengePage() {
     setError('')
 
     try {
-      const response = await fetch(`/api/challenges/${language}/${number}/submit`, {
+      const response = await fetch(`/api/challenges/${language}/${slugOrNumber}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -218,7 +218,7 @@ export default function ChallengePage() {
   }
 
   // Validate params
-  if (!language || !number) {
+  if (!language || !slugOrNumber) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
         <div className="text-center">
@@ -309,7 +309,7 @@ export default function ChallengePage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
             <div className="flex-1 min-w-0">
               <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 truncate">
-                Challenge #{challenge?.challengeNumber || number}: {challenge?.title || 'Loading...'}
+                Challenge #{challenge?.challengeNumber || slugOrNumber}: {challenge?.title || 'Loading...'}
               </h1>
               <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2">
                 {challenge?.difficulty && (
@@ -363,7 +363,7 @@ export default function ChallengePage() {
                   }}
                   height="400px"
                   showThemeToggle={true}
-                  fileName={`challenge-${number || '1'}`}
+                  fileName={`challenge-${challenge?.slug || slugOrNumber || '1'}`}
                 />
               )}
               <div className="bg-gray-50 px-3 sm:px-4 py-2.5 sm:py-3 border-t border-gray-200 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
@@ -406,11 +406,12 @@ export default function ChallengePage() {
           {/* Right Column - Live Participants & Leaderboard */}
           <div className="lg:col-span-1 space-y-4 sm:space-y-6">
             <LiveParticipants participants={Array.isArray(participants) ? participants : []} />
-            {language && number && (
+            {language && slugOrNumber && (
               <ChallengeLeaderboard 
                 leaderboard={Array.isArray(leaderboard) ? leaderboard : []}
                 language={language}
-                challengeNumber={number}
+                challengeNumber={challenge?.challengeNumber}
+                challengeSlug={challenge?.slug || slugOrNumber}
               />
             )}
           </div>

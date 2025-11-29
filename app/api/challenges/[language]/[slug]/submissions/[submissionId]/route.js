@@ -13,7 +13,7 @@ export async function GET(request, { params }) {
     const { submissionId } = params
 
     const submission = await ChallengeSubmission.findById(submissionId)
-      .populate('challengeId', 'title challengeNumber language')
+      .populate('challengeId', 'title challengeNumber slug language')
       .populate('userId', 'name email')
 
     if (!submission) {

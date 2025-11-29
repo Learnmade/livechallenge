@@ -19,7 +19,7 @@ export async function GET(request) {
     const submissions = await ChallengeSubmission.find({
       userId: new mongoose.Types.ObjectId(user.id),
     })
-      .populate('challengeId', 'title challengeNumber language difficulty points')
+      .populate('challengeId', 'title challengeNumber slug language difficulty points')
       .sort({ submittedAt: -1 })
       .limit(limit)
       .skip(skip)
@@ -39,6 +39,7 @@ export async function GET(request) {
         challengeId: subObj.challengeId?.id,
         challengeTitle: subObj.challengeId?.title,
         challengeNumber: subObj.challengeId?.challengeNumber,
+        challengeSlug: subObj.challengeId?.slug,
         language: subObj.challengeId?.language,
         difficulty: subObj.challengeId?.difficulty,
         status: subObj.status,

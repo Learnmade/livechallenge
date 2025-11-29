@@ -40,6 +40,12 @@ const ChallengeSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  slug: {
+    type: String,
+    required: true,
+    trim: true,
+    lowercase: true,
+  },
   examples: [{
     input: String,
     output: String,
@@ -101,7 +107,10 @@ const ChallengeSchema = new mongoose.Schema({
 
 // Compound index for language and challenge number
 ChallengeSchema.index({ language: 1, challengeNumber: 1 }, { unique: true })
+// Compound index for language and slug (for URL routing)
+ChallengeSchema.index({ language: 1, slug: 1 }, { unique: true })
 ChallengeSchema.index({ language: 1, isActive: 1 })
+ChallengeSchema.index({ slug: 1 })
 
 export default mongoose.models.Challenge || mongoose.model('Challenge', ChallengeSchema)
 

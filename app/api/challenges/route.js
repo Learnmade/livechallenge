@@ -39,6 +39,7 @@ async function getChallengesHandler(request) {
     })
       .sort({ challengeNumber: 1 })
       .select('-testCases -solution') // Don't send test cases or solution to client
+      .lean() // Use lean() for better performance
 
     // Get user's submission status for each challenge
     const challengesWithStatus = await Promise.all(
@@ -52,6 +53,11 @@ async function getChallengesHandler(request) {
         const challengeObj = challenge.toObject()
         challengeObj.id = challengeObj._id.toString()
         delete challengeObj._id
+        
+        // Ensure slug exists (fallback to generated slug if missing)
+        if (!challengeObj.slug) {
+          challengeObj.slug = `challenge-${challengeObj.challengeNumber}`
+        }
 
         const hasAttempted = await ChallengeSubmission.exists({ 
           challengeId: challenge._id, 

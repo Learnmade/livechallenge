@@ -4,6 +4,7 @@ import Challenge from '@/models/Challenge'
 import ChallengeSubmission from '@/models/ChallengeSubmission'
 import connectDB from '@/lib/mongodb'
 import mongoose from 'mongoose'
+import { findChallengeBySlugOrNumber } from '@/lib/challengeHelper'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,14 +16,10 @@ export async function GET(request, { params }) {
     const admin = await requireHost(request)
     await connectDB()
 
-    const { language, number } = params
-    const challengeNumber = parseInt(number)
+    const { language, slug } = params
 
-    const challenge = await Challenge.findOne({
-      language,
-      challengeNumber,
-      isActive: true,
-    })
+    // Get challenge by slug or number
+    const challenge = await findChallengeBySlugOrNumber(language, slug)
 
     if (!challenge) {
       return NextResponse.json(
@@ -109,7 +106,8 @@ export async function GET(request, { params }) {
         id: challenge._id.toString(),
         title: challenge.title,
         language,
-        challengeNumber,
+        challengeNumber: challenge.challengeNumber,
+        slug: challenge.slug,
       },
       participants,
       totalParticipants: participants.length,
