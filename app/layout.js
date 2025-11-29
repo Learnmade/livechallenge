@@ -6,8 +6,15 @@ import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { BattleProvider } from '@/contexts/BattleContext'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import dynamic from 'next/dynamic'
 
-const inter = Inter({ subsets: ['latin'] })
+// Optimize font loading
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  fallback: ['system-ui', 'arial'],
+})
 
 export default function RootLayout({ children }) {
   return (

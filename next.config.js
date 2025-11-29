@@ -3,7 +3,25 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
-  webpack: (config, { isServer }) => {
+  
+  // Production optimizations
+  swcMinify: true,
+  productionBrowserSourceMaps: false, // Disable source maps in production for security
+  
+  // Image optimization
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 60,
+  },
+  
+  // Experimental features for better performance
+  experimental: {
+    optimizePackageImports: ['lucide-react'],
+  },
+  
+  webpack: (config, { isServer, dev }) => {
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -12,6 +30,39 @@ const nextConfig = {
         crypto: false,
       }
     }
+    
+    // Exclude Monaco Editor from server-side bundle
+    if (isServer) {
+      config.externals = config.externals || []
+      config.externals.push({
+        '@monaco-editor/react': 'commonjs @monaco-editor/react',
+      })
+    }
+    
+    // Production optimizations
+    if (!dev && !isServer) {
+      config.optimization = {
+        ...config.optimization,
+        moduleIds: 'deterministic',
+        runtimeChunk: 'single',
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'vendors',
+              priority: 10,
+            },
+            monaco: {
+              test: /[\\/]node_modules[\\/]@monaco-editor[\\/]/,
+              name: 'monaco',
+              priority: 20,
+            },
+          },
+        },
+      }
+    }
+    
     return config
   },
   async headers() {

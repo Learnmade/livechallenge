@@ -5,23 +5,26 @@ import dynamic from 'next/dynamic'
 import { Moon, Sun, Loader2, Maximize2, Minimize2, Settings, FileCode, X, Circle, ChevronRight, ChevronDown, Folder, File } from 'lucide-react'
 
 // Configure Monaco Editor workers - use simpler approach
-if (typeof window !== 'undefined') {
-  window.MonacoEnvironment = {
-    getWorkerUrl: function (moduleId, label) {
-      // Use CDN for workers as fallback
-      if (label === 'json') {
-        return 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/language/json/json.worker.js'
+// Only configure on client side to avoid SSR issues
+if (typeof window !== 'undefined' && typeof self !== 'undefined') {
+  if (!window.MonacoEnvironment) {
+    window.MonacoEnvironment = {
+      getWorkerUrl: function (moduleId, label) {
+        // Use CDN for workers as fallback
+        if (label === 'json') {
+          return 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/language/json/json.worker.js'
+        }
+        if (label === 'css' || label === 'scss' || label === 'less') {
+          return 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/language/css/css.worker.js'
+        }
+        if (label === 'html' || label === 'handlebars' || label === 'razor') {
+          return 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/language/html/html.worker.js'
+        }
+        if (label === 'typescript' || label === 'javascript') {
+          return 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/language/typescript/ts.worker.js'
+        }
+        return 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/editor/editor.worker.js'
       }
-      if (label === 'css' || label === 'scss' || label === 'less') {
-        return 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/language/css/css.worker.js'
-      }
-      if (label === 'html' || label === 'handlebars' || label === 'razor') {
-        return 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/language/html/html.worker.js'
-      }
-      if (label === 'typescript' || label === 'javascript') {
-        return 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/language/typescript/ts.worker.js'
-      }
-      return 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/editor/editor.worker.js'
     }
   }
 }

@@ -4,10 +4,14 @@ import Challenge from '@/models/Challenge'
 import ChallengeSubmission from '@/models/ChallengeSubmission'
 import connectDB from '@/lib/mongodb'
 import mongoose from 'mongoose'
+import { cacheManager, generateCacheKey } from '@/lib/cache'
+import { withPerformanceTracking } from '@/lib/performance'
+import { logger } from '@/lib/logger'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 60 // Revalidate every 60 seconds
 
-export async function GET(request) {
+async function getChallengesHandler(request) {
   try {
     const user = await requireAuth(request)
     await connectDB()
@@ -17,6 +21,16 @@ export async function GET(request) {
 
     // Convert user.id to ObjectId
     const userId = new mongoose.Types.ObjectId(user.id)
+    
+    // Check cache first (cache key includes user ID for personalized data)
+    const cacheKey = generateCacheKey('challenges', language, user.id)
+    const cached = cacheManager.get(cacheKey)
+    if (cached) {
+      return NextResponse.json(cached, { 
+        status: 200,
+        headers: { 'X-Cache': 'HIT' }
+      })
+    }
 
     // Get all challenges for the language
     const challenges = await Challenge.find({ 
@@ -80,10 +94,18 @@ export async function GET(request) {
       ]).then(result => result[0]?.total || 0) : 0,
     }
 
-    return NextResponse.json({
+    const response = {
       challenges: challengesWithStatus,
       stats,
-    }, { status: 200 })
+    }
+    
+    // Cache the response for 2 minutes
+    cacheManager.set(cacheKey, response, 120000)
+    
+    return NextResponse.json(response, { 
+      status: 200,
+      headers: { 'X-Cache': 'MISS' }
+    })
   } catch (error) {
     if (error.message === 'Unauthorized') {
       return NextResponse.json(
@@ -91,11 +113,13 @@ export async function GET(request) {
         { status: 401 }
       )
     }
-    console.error('Get challenges error:', error)
+    logger.error('Get challenges error', { error: error.message, stack: error.stack })
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }
 }
+
+export const GET = withPerformanceTracking(getChallengesHandler)
 
