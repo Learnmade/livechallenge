@@ -178,14 +178,14 @@ export default function CodeEditor({
       style={{ height: isFullscreen ? '100vh' : height }}
     >
       {/* Premium Toolbar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-[#0B1121]">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <div className="h-8 w-8 rounded-lg bg-primary-500/10 flex items-center justify-center border border-primary-500/20">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-[#0B1121] gap-2 overflow-hidden">
+        <div className="flex items-center space-x-4 overflow-hidden">
+          <div className="flex items-center space-x-2 overflow-hidden">
+            <div className="h-8 w-8 rounded-lg bg-primary-500/10 flex items-center justify-center border border-primary-500/20 flex-shrink-0">
               <FileCode className="h-4 w-4 text-primary-400" />
             </div>
-            <div>
-              <p className="text-sm font-bold text-white leading-tight">{fileName}</p>
+            <div className="overflow-hidden">
+              <p className="text-sm font-bold text-white leading-tight truncate">{fileName}</p>
               <p className="text-xs text-primary-400 font-mono uppercase tracking-wider">
                 {languageMap[language] || 'JS'}
               </p>
@@ -193,7 +193,7 @@ export default function CodeEditor({
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 flex-shrink-0">
           {/* Actions */}
           <div className="flex items-center bg-black/20 rounded-lg p-1 border border-white/5 mr-2">
             <button
@@ -217,10 +217,10 @@ export default function CodeEditor({
             size="sm"
             onClick={onRun}
             disabled={isRunning || isSubmitting}
-            className="hidden sm:flex"
+            className="flex"
           >
             {isRunning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4 fill-current" />}
-            <span className="ml-2">Run</span>
+            <span className="ml-2 hidden sm:inline">Run</span>
           </Button>
 
           <Button
@@ -228,10 +228,10 @@ export default function CodeEditor({
             size="sm"
             onClick={onSubmit}
             disabled={isRunning || isSubmitting}
-            className="hidden sm:flex bg-green-600 hover:bg-green-700 text-white border-none"
+            className="flex bg-green-600 hover:bg-green-700 text-white border-none"
           >
             {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
-            <span className="ml-2">Submit</span>
+            <span className="ml-2 hidden sm:inline">Submit</span>
           </Button>
         </div>
       </div>

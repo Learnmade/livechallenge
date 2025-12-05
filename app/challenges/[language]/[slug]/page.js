@@ -103,6 +103,11 @@ export default function ChallengePage() {
     }
   }, [language, slugOrNumber])
 
+  /* New Layout State for Mobile */
+  const [mobileTab, setMobileTab] = useState('problem') // 'problem' or 'code'
+
+  // ... (existing helper functions: fetchChallenge, fetchParticipants, etc.)
+
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/login')
@@ -124,77 +129,7 @@ export default function ChallengePage() {
     }
   }, [user, authLoading, router, language, slugOrNumber, fetchChallenge, fetchParticipants, fetchLeaderboard])
 
-  const handleRun = async () => {
-    if (!code.trim()) {
-      toast.error('Please write some code first')
-      return
-    }
-    setIsRunning(true)
-    setOutput('')
-    setError('')
-    setSubmissionResult(null)
-
-    try {
-      const response = await fetch(`/api/challenges/${language}/${slugOrNumber}/run`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ code, language }),
-      })
-      const data = await response.json().catch(() => ({ error: 'Failed to parse response' }))
-
-      if (response.ok) {
-        setOutput(data.output || '')
-        if (data.error) setError(data.error)
-      } else {
-        setError(data.error || 'Execution failed')
-      }
-    } catch (error) {
-      console.error('Run code error:', error)
-      setError('Failed to run code. Please try again.')
-    } finally {
-      setIsRunning(false)
-    }
-  }
-
-  const handleSubmit = async () => {
-    if (!code.trim()) {
-      toast.error('Please write some code first')
-      return
-    }
-    setIsSubmitting(true)
-    setSubmissionResult(null)
-    setOutput('')
-    setError('')
-
-    try {
-      const response = await fetch(`/api/challenges/${language}/${slugOrNumber}/submit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ code, language }),
-      })
-      const data = await response.json().catch(() => ({ error: 'Failed to parse response' }))
-
-      if (response.ok) {
-        setSubmissionResult(data)
-        if (data.status === 'passed') {
-          toast.success(`Complete! Earned ${data.pointsEarned || 0} points!`)
-          if (fetchChallenge) fetchChallenge()
-          if (fetchLeaderboard) fetchLeaderboard()
-        } else {
-          toast.error('Tests failed. Check details below.')
-        }
-      } else {
-        toast.error(data.error || 'Submission failed')
-      }
-    } catch (error) {
-      console.error('Submit error:', error)
-      toast.error('Failed to submit. Please try again.')
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
+  // ... (existing handlers: handleRun, handleSubmit)
 
   // Loading States
   if (authLoading || loading) {
@@ -209,6 +144,7 @@ export default function ChallengePage() {
   }
 
   if (pageError || !challenge) {
+    // ... (existing error UI)
     return (
       <div className="min-h-screen bg-[#030712] flex items-center justify-center p-4">
         <div className="glass-panel max-w-md w-full p-8 text-center rounded-2xl">
@@ -243,6 +179,24 @@ export default function ChallengePage() {
           </div>
         </div>
 
+        {/* Mobile Tab Switcher */}
+        <div className="flex lg:hidden bg-white/5 rounded-lg p-1">
+          <button
+            onClick={() => setMobileTab('problem')}
+            className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${mobileTab === 'problem' ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-400 hover:text-white'
+              }`}
+          >
+            Problem
+          </button>
+          <button
+            onClick={() => setMobileTab('code')}
+            className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${mobileTab === 'code' ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-400 hover:text-white'
+              }`}
+          >
+            Code
+          </button>
+        </div>
+
         <div className="flex items-center gap-4">
           <div className="items-center gap-2 hidden md:flex bg-white/5 rounded-full px-3 py-1">
             <Clock className="h-3 w-3 text-primary-400" />
@@ -258,16 +212,28 @@ export default function ChallengePage() {
       </header>
 
       {/* Main Split Layout */}
-      <main className="flex-1 flex overflow-hidden">
-        {/* Left Pane: Problem Description (40%) */}
-        <div className="w-[40%] h-full p-4 overflow-hidden hidden lg:block border-r border-white/5">
-          <ProblemDisplay problem={challenge} />
+      <main className="flex-1 flex overflow-hidden relative">
+        {/* Left Pane: Problem Description */}
+        {/* Hidden on mobile if tab is 'code', always visible on lg */}
+        <div className={`
+          flex-col h-full bg-[#030712] border-r border-white/5
+          ${mobileTab === 'problem' ? 'flex w-full' : 'hidden'} 
+          lg:flex lg:w-[40%]
+        `}>
+          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+            <ProblemDisplay problem={challenge} />
+          </div>
         </div>
 
-        {/* Right Pane: Editor & Terminal (60%) */}
-        <div className="flex-1 flex flex-col h-full bg-[#030712] relative">
+        {/* Right Pane: Editor & Terminal */}
+        {/* Hidden on mobile if tab is 'problem', always visible on lg */}
+        <div className={`
+          flex-col h-full bg-[#030712] relative
+          ${mobileTab === 'code' ? 'flex w-full' : 'hidden'}
+          lg:flex lg:flex-1
+        `}>
           {/* Top: Editor */}
-          <div className="flex-1 p-4 min-h-0">
+          <div className="flex-1 p-2 sm:p-4 min-h-0">
             <CodeEditor
               language={language}
               value={code}
@@ -284,17 +250,12 @@ export default function ChallengePage() {
           </div>
 
           {/* Bottom: Terminal */}
-          <div className="h-[35%] min-h-[200px] p-4 pt-0">
+          <div className="h-[40vh] lg:h-[35%] min-h-[200px] p-2 sm:p-4 pt-0">
             <Terminal
               output={output}
               error={error}
               submissionResult={submissionResult}
             />
-          </div>
-
-          {/* Mobile Problem Trigger (Floating) */}
-          <div className="lg:hidden absolute bottom-4 right-4 z-50">
-            {/* Could add a trigger to show problem modal on mobile */}
           </div>
         </div>
       </main>

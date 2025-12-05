@@ -4,19 +4,21 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Code, Users, Trophy, Clock, CheckCircle, TrendingUp } from 'lucide-react'
+import { Code, Users, Trophy, Clock, CheckCircle, TrendingUp, Sparkles, Zap, Search, Filter } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Navigation from '@/components/Navigation'
+import { motion, AnimatePresence } from 'framer-motion'
+import Badge from '@/components/ui/Badge'
 
 const languages = [
-  { id: 'javascript', name: 'JavaScript', icon: '🟨', color: 'from-yellow-500 to-yellow-600' },
-  { id: 'python', name: 'Python', icon: '🐍', color: 'from-blue-500 to-blue-600' },
-  { id: 'java', name: 'Java', icon: '☕', color: 'from-orange-500 to-orange-600' },
-  { id: 'cpp', name: 'C++', icon: '⚡', color: 'from-blue-600 to-blue-700' },
-  { id: 'go', name: 'Go', icon: '🐹', color: 'from-cyan-500 to-cyan-600' },
-  { id: 'rust', name: 'Rust', icon: '🦀', color: 'from-orange-600 to-orange-700' },
-  { id: 'csharp', name: 'C#', icon: '💜', color: 'from-purple-500 to-purple-600' },
-  { id: 'typescript', name: 'TypeScript', icon: '🔷', color: 'from-blue-500 to-indigo-600' },
+  { id: 'javascript', name: 'JavaScript', icon: '🟨', color: 'from-yellow-400/20 to-yellow-600/20', border: 'border-yellow-500/50', text: 'text-yellow-400' },
+  { id: 'python', name: 'Python', icon: '🐍', color: 'from-blue-400/20 to-blue-600/20', border: 'border-blue-500/50', text: 'text-blue-400' },
+  { id: 'java', name: 'Java', icon: '☕', color: 'from-orange-400/20 to-orange-600/20', border: 'border-orange-500/50', text: 'text-orange-400' },
+  { id: 'cpp', name: 'C++', icon: '⚡', color: 'from-blue-500/20 to-indigo-600/20', border: 'border-blue-500/50', text: 'text-blue-400' },
+  { id: 'go', name: 'Go', icon: '🐹', color: 'from-cyan-400/20 to-cyan-600/20', border: 'border-cyan-500/50', text: 'text-cyan-400' },
+  { id: 'rust', name: 'Rust', icon: '🦀', color: 'from-orange-500/20 to-red-600/20', border: 'border-orange-500/50', text: 'text-orange-400' },
+  { id: 'csharp', name: 'C#', icon: '💜', color: 'from-purple-400/20 to-purple-600/20', border: 'border-purple-500/50', text: 'text-purple-400' },
+  { id: 'typescript', name: 'TypeScript', icon: '🔷', color: 'from-blue-400/20 to-blue-600/20', border: 'border-blue-500/50', text: 'text-blue-400' },
 ]
 
 export default function ChallengesPage() {
@@ -27,30 +29,21 @@ export default function ChallengesPage() {
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({})
   const [isSeeding, setIsSeeding] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const fetchChallenges = useCallback(async () => {
     try {
       setLoading(true)
-      // Add timestamp to bypass cache after seeding
       const timestamp = Date.now()
       const response = await fetch(`/api/challenges?language=${selectedLanguage}&_t=${timestamp}`, {
         credentials: 'include',
-        cache: 'no-store', // Disable browser cache
+        cache: 'no-store',
       })
       if (response.ok) {
         const data = await response.json()
-        console.log(`📊 Fetched ${data.challenges?.length || 0} challenges for ${selectedLanguage}`)
-        console.log(`📝 Challenges data:`, data.challenges?.slice(0, 2)) // Log first 2 challenges
         setChallenges(data.challenges || [])
         setStats(data.stats || {})
-        
-        // If no challenges but we expect them, log warning
-        if ((data.challenges || []).length === 0) {
-          console.warn(`⚠️  No challenges returned for ${selectedLanguage}. Stats:`, data.stats)
-        }
       } else {
-        const errorData = await response.json().catch(() => ({}))
-        console.error('Error fetching challenges:', errorData)
         setChallenges([])
         setStats({})
       }
@@ -64,12 +57,10 @@ export default function ChallengesPage() {
   }, [selectedLanguage])
 
   useEffect(() => {
-    // Wait for auth check to complete before redirecting
     if (!authLoading && !user) {
       router.push('/login')
       return
     }
-    // Only fetch challenges if user is authenticated
     if (!authLoading && user) {
       fetchChallenges()
     }
@@ -79,7 +70,7 @@ export default function ChallengesPage() {
     if (!confirm('This will create 80 challenges (10 per language). Continue?')) {
       return
     }
-    
+
     setIsSeeding(true)
     try {
       const response = await fetch('/api/admin/seed-challenges', {
@@ -90,37 +81,13 @@ export default function ChallengesPage() {
       const data = await response.json()
 
       if (response.ok || response.status === 207) {
-        // 207 Multi-Status means partial success
-        if (data.totalErrors > 0) {
-          toast.success(
-            `Seeding completed with ${data.totalErrors} errors. ${data.totalCreated} challenges created.`,
-            { duration: 5000 }
-          )
-        } else {
-          toast.success(
-            `Successfully created ${data.totalCreated} challenges across ${data.languagesProcessed} languages!`,
-            { duration: 5000 }
-          )
-        }
-        
-        // Clear cache and refresh challenges list
-        // Force a fresh fetch by adding timestamp
-        setTimeout(() => {
-          fetchChallenges()
-        }, 500)
-        
-        // Also refresh after a longer delay to ensure DB is updated
-        setTimeout(() => {
-          fetchChallenges()
-        }, 2000)
+        toast.success(`Generated ${data.totalCreated} challenges!`, { icon: '🚀' })
+        setTimeout(() => fetchChallenges(), 1000)
       } else {
-        const errorMsg = data.message || data.error || 'Failed to seed challenges'
-        toast.error(errorMsg, { duration: 6000 })
-        console.error('Seeding error:', data)
+        toast.error(data.message || 'Failed to seed challenges')
       }
     } catch (error) {
-      console.error('Seed challenges error:', error)
-      toast.error('Failed to seed challenges. Make sure you are logged in as admin.')
+      toast.error('Failed to seed challenges')
     } finally {
       setIsSeeding(false)
     }
@@ -128,222 +95,228 @@ export default function ChallengesPage() {
 
   const getDifficultyColor = (difficulty) => {
     switch (difficulty) {
-      case 'easy': return 'bg-green-50 text-green-700 border-green-200'
-      case 'medium': return 'bg-yellow-50 text-yellow-700 border-yellow-200'
-      case 'hard': return 'bg-red-50 text-red-700 border-red-200'
-      default: return 'bg-gray-50 text-gray-700 border-gray-200'
+      case 'easy': return 'text-green-400 bg-green-400/10 border-green-400/20'
+      case 'medium': return 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20'
+      case 'hard': return 'text-red-400 bg-red-400/10 border-red-400/20'
+      default: return 'text-gray-400 bg-gray-400/10 border-gray-400/20'
     }
   }
 
-  // Show loading state while checking authentication
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="text-gray-600 mt-4">Loading...</p>
-        </div>
-      </div>
-    )
-  }
+  const filteredChallenges = challenges.filter(c =>
+    c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    c.description.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
-  // Redirect if not authenticated (handled by useEffect, but show loading while redirecting)
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="text-gray-600 mt-4">Redirecting...</p>
-        </div>
-      </div>
-    )
-  }
+  if (authLoading) return null // Or a loading spinner handled globally
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
+    <div className="min-h-screen bg-[#030712] text-white selection:bg-primary-500/30">
       <Navigation />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        {/* Hero Section */}
-        <div className="mb-6 sm:mb-8">
-          <div className="bg-gradient-to-r from-primary-600 to-blue-700 rounded-xl sm:rounded-2xl p-6 sm:p-8 text-white shadow-xl mb-4 sm:mb-6">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-3">Choose Your Challenge 🚀</h1>
-            <p className="text-blue-100 text-base sm:text-lg">Select a programming language and start solving challenges</p>
-          </div>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32">
+        {/* Header Section */}
+        <div className="text-center mb-16 relative">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary-500/20 rounded-full blur-[100px] -z-10" />
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-4xl sm:text-6xl font-black mb-6 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-white"
+          >
+            Master Your Craft
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-lg text-gray-400 max-w-2xl mx-auto"
+          >
+            Select your preferred language and tackle challenges designed to push your skills to the limit. Join thousands of developers competing globally.
+          </motion.p>
         </div>
 
-        {/* Language Selection */}
-        <div className="mb-6 sm:mb-8">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center">
-            <span className="bg-primary-100 rounded-lg p-1.5 sm:p-2 mr-2 sm:mr-3">
-              <Code className="h-5 w-5 sm:h-6 sm:w-6 text-primary-600" />
-            </span>
-            Programming Languages
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-4">
-            {languages.map((lang) => (
-              <button
+        {/* Language Selector */}
+        <div className="mb-16">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <Code className="text-primary-400" />
+              <span>Languages</span>
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+            {languages.map((lang, idx) => (
+              <motion.button
                 key={lang.id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: idx * 0.05 }}
                 onClick={() => setSelectedLanguage(lang.id)}
-                className={`group relative p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border-2 transition-all transform hover:scale-105 ${
-                  selectedLanguage === lang.id
-                    ? `bg-gradient-to-r ${lang.color} border-transparent text-white shadow-xl`
-                    : 'bg-white border-gray-200 text-gray-700 hover:border-primary-400 hover:shadow-lg'
-                }`}
+                className={`
+                  relative p-4 rounded-xl border transition-all duration-300 group
+                  ${selectedLanguage === lang.id
+                    ? `bg-gradient-to-br ${lang.color} ${lang.border} ring-2 ring-primary-500/50 shadow-lg shadow-primary-500/20`
+                    : 'bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10'}
+                `}
               >
-                <div className="text-3xl sm:text-4xl mb-2 sm:mb-3 transform group-hover:scale-110 transition-transform">{lang.icon}</div>
-                <div className="font-bold text-base sm:text-lg">{lang.name}</div>
+                <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">{lang.icon}</div>
+                <div className={`font-semibold text-sm ${selectedLanguage === lang.id ? 'text-white' : 'text-gray-400 group-hover:text-white'}`}>
+                  {lang.name}
+                </div>
                 {selectedLanguage === lang.id && (
-                  <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2">
-                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-                  </div>
+                  <motion.div
+                    layoutId="activeLang"
+                    className="absolute inset-0 rounded-xl bg-primary-500/10"
+                    initial={false}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
                 )}
-              </button>
+              </motion.button>
             ))}
           </div>
         </div>
 
-        {/* Stats */}
-        {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border-2 border-blue-200 shadow-lg p-4 sm:p-5 md:p-6 hover:shadow-xl transition-all transform hover:scale-105">
-              <div className="flex items-center justify-between mb-2 sm:mb-3">
-                <div className="bg-primary-600 rounded-lg p-2 sm:p-3">
-                  <Code className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+          {[
+            { label: 'Available Challenges', value: stats.totalChallenges || 0, icon: Sparkles, color: 'text-purple-400' },
+            { label: 'Completed', value: stats.completed || 0, icon: CheckCircle, color: 'text-green-400' },
+            { label: 'Total Points', value: stats.points || 0, icon: Trophy, color: 'text-yellow-400' },
+            { label: 'Participants', value: stats.participants || 0, icon: Users, color: 'text-blue-400' },
+          ].map((stat, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 + idx * 0.1 }}
+              className="bg-white/5 border border-white/10 p-6 rounded-xl hover:bg-white/10 transition-colors"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className={`p-2 rounded-lg bg-white/5 ${stat.color}`}>
+                  <stat.icon className="w-5 h-5" />
                 </div>
-                <span className="text-2xl sm:text-3xl font-bold text-gray-900">{stats.totalChallenges || 0}</span>
               </div>
-              <p className="text-gray-700 font-semibold text-sm sm:text-base">Total Challenges</p>
-              <p className="text-xs text-gray-600 mt-1">Available to solve</p>
-            </div>
-            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl border-2 border-green-200 shadow-lg p-6 hover:shadow-xl transition-all transform hover:scale-105">
-              <div className="flex items-center justify-between mb-3">
-                <div className="bg-green-500 rounded-lg p-3">
-                  <CheckCircle className="h-6 w-6 text-white" />
-                </div>
-                <span className="text-3xl font-bold text-gray-900">{stats.completed || 0}</span>
-              </div>
-              <p className="text-gray-700 font-semibold">Completed</p>
-              <p className="text-xs text-gray-600 mt-1">Great progress!</p>
-            </div>
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border-2 border-purple-200 shadow-lg p-6 hover:shadow-xl transition-all transform hover:scale-105">
-              <div className="flex items-center justify-between mb-3">
-                <div className="bg-purple-500 rounded-lg p-3">
-                  <Users className="h-6 w-6 text-white" />
-                </div>
-                <span className="text-3xl font-bold text-gray-900">{stats.participants || 0}</span>
-              </div>
-              <p className="text-gray-700 font-semibold">Participants</p>
-              <p className="text-xs text-gray-600 mt-1">Join the community</p>
-            </div>
-            <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl border-2 border-amber-200 shadow-lg p-6 hover:shadow-xl transition-all transform hover:scale-105">
-              <div className="flex items-center justify-between mb-3">
-                <div className="bg-yellow-500 rounded-lg p-3">
-                  <Trophy className="h-6 w-6 text-white" />
-                </div>
-                <span className="text-3xl font-bold text-gray-900">{stats.points || 0}</span>
-              </div>
-              <p className="text-gray-700 font-semibold">Points Earned</p>
-              <p className="text-xs text-gray-600 mt-1">Keep earning!</p>
-            </div>
-          </div>
-        )}
+              <div className="text-3xl font-bold text-white mb-1">{stat.value}</div>
+              <div className="text-xs text-gray-500 font-medium uppercase tracking-wider">{stat.label}</div>
+            </motion.div>
+          ))}
+        </div>
 
-        {/* Challenges List */}
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
+        {/* Challenges List Header */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
+          <h2 className="text-2xl font-bold text-white">
             {languages.find(l => l.id === selectedLanguage)?.name} Challenges
           </h2>
-          
-          {loading ? (
-            <div className="text-center py-8 sm:py-12">
-              <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-primary-600 mx-auto"></div>
-              <p className="text-gray-600 mt-4 text-sm sm:text-base">Loading challenges...</p>
+          <div className="flex gap-3 w-full md:w-auto">
+            <div className="relative flex-1 md:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <input
+                type="text"
+                placeholder="Search challenges..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
+              />
             </div>
-          ) : challenges.length === 0 ? (
-            <div className="text-center py-8 sm:py-12 bg-white rounded-xl border border-gray-200 shadow-sm px-4">
-              <Code className="h-12 w-12 sm:h-16 sm:w-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 mb-4 text-sm sm:text-base">No challenges available for this language yet.</p>
-              <div className="space-y-2">
-                {user?.isHost ? (
-                  <>
-                    <button
-                      onClick={handleSeedChallenges}
-                      disabled={isSeeding}
-                      className="inline-block bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-semibold transition-colors shadow-sm"
-                    >
-                      {isSeeding ? 'Seeding Challenges...' : 'Seed All Challenges (80 total)'}
-                    </button>
-                    <p className="text-gray-500 text-xs mt-2">
-                      This will create 10 challenges for each of 8 programming languages
-                    </p>
-                  </>
-                ) : (
-                  <p className="text-gray-500 text-sm">
-                    Please contact an administrator to seed challenges.
-                  </p>
+          </div>
+        </div>
+
+        {/* Challenges Grid */}
+        <div className="grid gap-4">
+          <AnimatePresence mode="popLayout">
+            {loading ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-center py-20"
+              >
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+                <p className="text-gray-400">Loading challenges...</p>
+              </motion.div>
+            ) : filteredChallenges.length > 0 ? (
+              filteredChallenges.map((challenge, idx) => (
+                <motion.div
+                  key={challenge.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  whileHover={{ scale: 1.01, backgroundColor: "rgba(255,255,255,0.03)" }}
+                  className="group relative bg-[#0B1121] border border-white/10 rounded-xl p-6 transition-all hover:border-primary-500/30 hover:shadow-lg hover:shadow-primary-500/10"
+                >
+                  <Link href={`/challenges/${challenge.language}/${challenge.slug || challenge.challengeNumber}`} className="flex flex-col md:flex-row gap-6">
+                    {/* Status Indicator */}
+                    <div className="flex-shrink-0">
+                      <div className={`
+                        w-12 h-12 rounded-xl flex items-center justify-center border
+                        ${challenge.userStatus === 'completed'
+                          ? 'bg-green-500/10 border-green-500/20 text-green-500'
+                          : 'bg-primary-500/10 border-primary-500/20 text-primary-500'}
+                      `}>
+                        {challenge.userStatus === 'completed' ? <CheckCircle className="w-6 h-6" /> : <Code className="w-6 h-6" />}
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-xs font-mono text-primary-400 bg-primary-500/10 px-2 py-0.5 rounded border border-primary-500/20">
+                          #{challenge.challengeNumber}
+                        </span>
+                        <h3 className="text-xl font-bold text-white truncate group-hover:text-primary-400 transition-colors">
+                          {challenge.title}
+                        </h3>
+                        {challenge.userStatus === 'completed' && (
+                          <Badge variant="success" size="sm">Solved</Badge>
+                        )}
+                      </div>
+
+                      <p className="text-gray-400 mb-4 line-clamp-2">{challenge.description}</p>
+
+                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md border ${getDifficultyColor(challenge.difficulty)}`}>
+                          <TrendingUp className="w-3 h-3" />
+                          <span className="font-semibold uppercase text-[10px]">{challenge.difficulty}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Trophy className="w-4 h-4 text-yellow-500" />
+                          <span className="text-gray-300">{challenge.points} pts</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Users className="w-4 h-4 text-blue-500" />
+                          <span className="text-gray-300">{challenge.participants?.length || 0}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Arrow */}
+                    <div className="hidden md:flex items-center justify-center w-12 border-l border-white/5 pl-6">
+                      <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-primary-500 group-hover:text-white transition-all">
+                        <Zap className="w-4 h-4" />
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))
+            ) : (
+              <div className="text-center py-20 bg-white/5 rounded-xl border border-white/10 border-dashed">
+                <Code className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-white mb-2">No Challenges Found</h3>
+                <p className="text-gray-400 mb-6">
+                  {searchQuery ? 'Try adjusting your search terms.' : 'There are no challenges available for this language yet.'}
+                </p>
+                {user?.isHost && !searchQuery && (
+                  <button
+                    onClick={handleSeedChallenges}
+                    disabled={isSeeding}
+                    className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+                  >
+                    {isSeeding ? 'Generating...' : 'Generate Challenges'}
+                  </button>
                 )}
               </div>
-            </div>
-          ) : (
-            <div className="grid gap-4 sm:gap-6">
-              {challenges.map((challenge) => (
-                <Link
-                  key={challenge.id}
-                  href={`/challenges/${challenge.language}/${challenge.slug || challenge.challengeNumber}`}
-                  className="group bg-white rounded-xl sm:rounded-2xl border-2 border-gray-200 p-4 sm:p-6 hover:border-primary-400 hover:shadow-xl transition-all transform hover:scale-[1.01] sm:hover:scale-[1.02] shadow-lg"
-                >
-                  <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
-                    <div className="flex-1 w-full">
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
-                        <div className="bg-primary-100 rounded-lg sm:rounded-xl px-3 sm:px-4 py-1.5 sm:py-2">
-                          <span className="text-lg sm:text-xl font-bold text-primary-600">
-                            #{challenge.challengeNumber}
-                          </span>
-                        </div>
-                        <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors">{challenge.title}</h3>
-                        <span className={`px-2 sm:px-3 py-1 rounded-lg text-xs font-bold border-2 ${getDifficultyColor(challenge.difficulty)}`}>
-                          {challenge.difficulty.toUpperCase()}
-                        </span>
-                      </div>
-                      <p className="text-gray-600 mb-4 sm:mb-5 line-clamp-2 text-sm sm:text-base md:text-lg">{challenge.description}</p>
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 md:gap-4 text-xs sm:text-sm">
-                        <div className="flex items-center space-x-1.5 sm:space-x-2 bg-yellow-50 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg">
-                          <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />
-                          <span className="text-gray-900 font-semibold">{challenge.points} points</span>
-                        </div>
-                        <div className="flex items-center space-x-1.5 sm:space-x-2 bg-blue-50 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg">
-                          <Users className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
-                          <span className="text-gray-900 font-semibold">{challenge.participants?.length || 0} participants</span>
-                        </div>
-                        <div className="flex items-center space-x-1.5 sm:space-x-2 bg-green-50 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg">
-                          <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
-                          <span className="text-gray-900 font-semibold">{challenge.successfulSubmissions || 0} solved</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="sm:ml-4 flex flex-row sm:flex-col items-center gap-3 sm:gap-0 w-full sm:w-auto">
-                      {challenge.userStatus === 'completed' && (
-                        <div className="bg-green-100 rounded-full p-2 sm:p-3">
-                          <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
-                        </div>
-                      )}
-                      {challenge.userStatus === 'attempted' && (
-                        <div className="bg-yellow-100 rounded-full p-2 sm:p-3">
-                          <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-600" />
-                        </div>
-                      )}
-                      <span className="text-xs sm:text-sm text-gray-500 font-medium group-hover:text-primary-600 transition-colors">
-                        {challenge.userStatus === 'completed' ? 'Solved' : challenge.userStatus === 'attempted' ? 'In Progress' : 'Start →'}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
+            )}
+          </AnimatePresence>
         </div>
-      </div>
+      </main>
     </div>
   )
 }

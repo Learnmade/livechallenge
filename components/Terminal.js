@@ -19,8 +19,8 @@ export default function Terminal({ output, error, submissionResult }) {
         <button
           onClick={() => setActiveTab('output')}
           className={`flex items-center space-x-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'output'
-              ? 'border-primary-500 text-white bg-primary-500/5'
-              : 'border-transparent text-gray-400 hover:text-gray-200 hover:bg-white/5'
+            ? 'border-primary-500 text-white bg-primary-500/5'
+            : 'border-transparent text-gray-400 hover:text-gray-200 hover:bg-white/5'
             }`}
         >
           <TerminalIcon className="h-4 w-4" />
@@ -29,8 +29,8 @@ export default function Terminal({ output, error, submissionResult }) {
         <button
           onClick={() => setActiveTab('tests')}
           className={`flex items-center space-x-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'tests'
-              ? 'border-primary-500 text-white bg-primary-500/5'
-              : 'border-transparent text-gray-400 hover:text-gray-200 hover:bg-white/5'
+            ? 'border-primary-500 text-white bg-primary-500/5'
+            : 'border-transparent text-gray-400 hover:text-gray-200 hover:bg-white/5'
             }`}
         >
           <LayoutList className="h-4 w-4" />
@@ -39,7 +39,7 @@ export default function Terminal({ output, error, submissionResult }) {
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto p-4 font-mono text-sm">
+      <div className="flex-1 overflow-y-auto p-2 sm:p-4 font-mono text-sm">
         <AnimatePresence mode="wait">
           {activeTab === 'output' && (
             <motion.div
@@ -83,8 +83,8 @@ export default function Terminal({ output, error, submissionResult }) {
                 <div className="space-y-4">
                   {/* Summary Card */}
                   <div className={`p-4 rounded-xl border ${submissionResult.status === 'passed'
-                      ? 'bg-green-500/10 border-green-500/20'
-                      : 'bg-red-500/10 border-red-500/20'
+                    ? 'bg-green-500/10 border-green-500/20'
+                    : 'bg-red-500/10 border-red-500/20'
                     }`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -117,8 +117,8 @@ export default function Terminal({ output, error, submissionResult }) {
                       <div
                         key={index}
                         className={`group border rounded-lg overflow-hidden transition-all ${result.passed
-                            ? 'bg-white/5 border-white/10 hover:border-green-500/30'
-                            : 'bg-red-500/5 border-red-500/20'
+                          ? 'bg-white/5 border-white/10 hover:border-green-500/30'
+                          : 'bg-red-500/5 border-red-500/20'
                           }`}
                       >
                         <div className="flex items-center justify-between p-3 bg-white/5">
