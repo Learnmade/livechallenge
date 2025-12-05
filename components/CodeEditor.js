@@ -86,44 +86,48 @@ export default function CodeEditor({
     }
   }, [fontSize, wordWrap, minimap, isMounted])
 
+  const handleBeforeMount = (monaco) => {
+    // Define Obsidian/Premium Dark Theme
+    try {
+      monaco.editor.defineTheme('obsidian-dark', {
+        base: 'vs-dark',
+        inherit: true,
+        rules: [
+          { token: 'comment', foreground: '6272A4', fontStyle: 'italic' },
+          { token: 'keyword', foreground: 'FF79C6', fontStyle: 'bold' },
+          { token: 'string', foreground: 'F1FA8C' },
+          { token: 'number', foreground: 'BD93F9' },
+          { token: 'type', foreground: '8BE9FD' },
+          { token: 'function', foreground: '50FA7B' },
+          { token: 'variable', foreground: 'F8F8F2' },
+          { token: 'constant', foreground: 'BD93F9' },
+        ],
+        colors: {
+          'editor.background': '#030712',
+          'editor.foreground': '#F8F8F2',
+          'editorLineNumber.foreground': '#6272A4',
+          'editorLineNumber.activeForeground': '#F8F8F2',
+          'editor.selectionBackground': '#44475A',
+          'editor.lineHighlightBackground': '#44475A22',
+          'editorCursor.foreground': '#F8F8F2',
+          'editorWhitespace.foreground': '#6272A4',
+          'editorIndentGuide.background': '#6272A4',
+          'editorIndentGuide.activeBackground': '#F8F8F2',
+        },
+      })
+    } catch (e) {
+      console.warn('Failed to define theme:', e)
+    }
+  }
+
   const handleEditorDidMount = (editor, monaco) => {
     if (!editor) return
 
     editorRef.current = editor
 
-    // Define Obsidian/Premium Dark Theme
+    // Set theme explicitly after mount just in case
     if (monaco) {
-      try {
-        monaco.editor.defineTheme('obsidian-dark', {
-          base: 'vs-dark',
-          inherit: true,
-          rules: [
-            { token: 'comment', foreground: '6272A4', fontStyle: 'italic' },
-            { token: 'keyword', foreground: 'FF79C6', fontStyle: 'bold' },
-            { token: 'string', foreground: 'F1FA8C' },
-            { token: 'number', foreground: 'BD93F9' },
-            { token: 'type', foreground: '8BE9FD' },
-            { token: 'function', foreground: '50FA7B' },
-            { token: 'variable', foreground: 'F8F8F2' },
-            { token: 'constant', foreground: 'BD93F9' },
-          ],
-          colors: {
-            'editor.background': '#030712',
-            'editor.foreground': '#F8F8F2',
-            'editorLineNumber.foreground': '#6272A4',
-            'editorLineNumber.activeForeground': '#F8F8F2',
-            'editor.selectionBackground': '#44475A',
-            'editor.lineHighlightBackground': '#44475A22',
-            'editorCursor.foreground': '#F8F8F2',
-            'editorWhitespace.foreground': '#6272A4',
-            'editorIndentGuide.background': '#6272A4',
-            'editorIndentGuide.activeBackground': '#F8F8F2',
-          },
-        })
-        monaco.editor.setTheme('obsidian-dark')
-      } catch (e) {
-        console.warn('Failed to define theme:', e)
-      }
+      monaco.editor.setTheme('obsidian-dark')
     }
 
     editor.updateOptions({
@@ -291,6 +295,7 @@ export default function CodeEditor({
           value={value ?? ''}
           onChange={handleChange}
           theme="obsidian-dark" // Forces our custom theme
+          beforeMount={handleBeforeMount}
           onMount={handleEditorDidMount}
           loading={
             <div className="flex items-center justify-center h-full bg-[#030712]">
