@@ -71,7 +71,7 @@ export class ErrorBoundary extends Component {
                 </Link>
               </div>
             </div>
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {(true || process.env.NODE_ENV === 'development') && this.state.error && (
               <details className="mt-6">
                 <summary className="text-sm text-[#8b949e] cursor-pointer hover:text-[#c9d1d9] transition-colors">
                   Error Details (Development Only)

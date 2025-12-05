@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { CheckCircle, XCircle, AlertCircle, Terminal as TerminalIcon, LayoutList, Clock } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -8,9 +8,11 @@ export default function Terminal({ output, error, submissionResult }) {
   const [activeTab, setActiveTab] = useState('output')
 
   // Auto-switch to test results if there is a submission result
-  if (submissionResult && activeTab !== 'tests') {
-    setActiveTab('tests')
-  }
+  useEffect(() => {
+    if (submissionResult) {
+      setActiveTab('tests')
+    }
+  }, [submissionResult])
 
   return (
     <div className="bg-[#030712] rounded-xl border border-white/10 shadow-xl overflow-hidden flex flex-col h-full">
