@@ -2,7 +2,8 @@
 
 import { useRef, useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
-import { Moon, Sun, Loader2, Maximize2, Minimize2, Settings, FileCode, X, Circle, ChevronRight, ChevronDown, Folder, File } from 'lucide-react'
+import { Moon, Sun, Loader2, Maximize2, Minimize2, Settings, FileCode, X, Circle, ChevronRight, ChevronDown, Folder, Play, CheckCircle } from 'lucide-react'
+import Button from './ui/Button'
 
 // Configure Monaco Editor workers - use simpler approach
 // Only configure on client side to avoid SSR issues
@@ -32,20 +33,33 @@ if (typeof window !== 'undefined' && typeof self !== 'undefined') {
 // Dynamically import Monaco Editor
 const MonacoEditor = dynamic(
   () => import('@monaco-editor/react'),
-  { 
+  {
     ssr: false,
     loading: () => (
-      <div className={`flex items-center justify-center h-full ${isDark ? 'bg-[#1a1a1a]' : 'bg-white'}`}>
+      <div className="flex items-center justify-center h-full bg-[#030712]">
         <div className="text-center">
-          <Loader2 className={`h-8 w-8 animate-spin mx-auto mb-2 ${isDark ? 'text-[#58a6ff]' : 'text-primary-600'}`} />
-          <p className={isDark ? 'text-[#8b949e]' : 'text-gray-600'}>Loading editor...</p>
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-primary-500" />
+          <p className="text-gray-400">Loading editor...</p>
         </div>
       </div>
     )
   }
 )
 
-export default function CodeEditor({ language, value, onChange, theme: initialTheme = 'vs-dark', height = '500px', readOnly = false, showThemeToggle = true, fileName = 'solution' }) {
+export default function CodeEditor({
+  language,
+  value,
+  onChange,
+  onRun,
+  onSubmit,
+  isRunning,
+  isSubmitting,
+  theme: initialTheme = 'vs-dark',
+  height = '100%',
+  readOnly = false,
+  showThemeToggle = true,
+  fileName = 'solution'
+}) {
   const editorRef = useRef(null)
   const [theme, setTheme] = useState(initialTheme)
   const [isMounted, setIsMounted] = useState(false)
@@ -54,8 +68,9 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
   const [fontSize, setFontSize] = useState(14)
   const [wordWrap, setWordWrap] = useState(true)
   const [minimap, setMinimap] = useState(false)
-  const [sidebarExpanded, setSidebarExpanded] = useState(true)
-  const [sidebarWidth, setSidebarWidth] = useState(250)
+
+  // New Layout State
+  const [activeTab, setActiveTab] = useState('code')
 
   useEffect(() => {
     setIsMounted(true)
@@ -73,129 +88,63 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
 
   const handleEditorDidMount = (editor, monaco) => {
     if (!editor) return
-    
+
     editorRef.current = editor
-    
-    // Define Cursor-like theme colors
-    if (monaco && theme === 'vs-dark') {
-      monaco.editor.defineTheme('cursor-dark', {
+
+    // Define Obsidian/Premium Dark Theme
+    if (monaco) {
+      monaco.editor.defineTheme('obsidian-dark', {
         base: 'vs-dark',
         inherit: true,
         rules: [
-          { token: 'comment', foreground: '6A9955', fontStyle: 'italic' },
-          { token: 'keyword', foreground: '569CD6' },
-          { token: 'string', foreground: 'CE9178' },
-          { token: 'number', foreground: 'B5CEA8' },
-          { token: 'type', foreground: '4EC9B0' },
-          { token: 'function', foreground: 'DCDCAA' },
+          { token: 'comment', foreground: '6272A4', fontStyle: 'italic' },
+          { token: 'keyword', foreground: 'FF79C6', fontStyle: 'bold' },
+          { token: 'string', foreground: 'F1FA8C' },
+          { token: 'number', foreground: 'BD93F9' },
+          { token: 'type', foreground: '8BE9FD' },
+          { token: 'function', foreground: '50FA7B' },
+          { token: 'variable', foreground: 'F8F8F2' },
+          { token: 'constant', foreground: 'BD93F9' },
         ],
         colors: {
-          'editor.background': '#1a1a1a',
-          'editor.foreground': '#e4e4e4',
-          'editorLineNumber.foreground': '#6e7681',
-          'editorLineNumber.activeForeground': '#c9d1d9',
-          'editor.selectionBackground': '#264f78',
-          'editor.lineHighlightBackground': '#161b22',
-          'editorCursor.foreground': '#58a6ff',
-          'editorWhitespace.foreground': '#30363d',
-          'editorIndentGuide.background': '#21262d',
-          'editorIndentGuide.activeBackground': '#30363d',
-          'editorBracketMatch.background': '#1a472a',
-          'editorBracketMatch.border': '#238636',
+          'editor.background': '#030712', // Matches tailwind background
+          'editor.foreground': '#F8F8F2',
+          'editorLineNumber.foreground': '#6272A4',
+          'editorLineNumber.activeForeground': '#F8F8F2',
+          'editor.selectionBackground': '#44475A',
+          'editor.lineHighlightBackground': '#44475A22',
+          'editorCursor.foreground': '#F8F8F2',
+          'editorWhitespace.foreground': '#6272A4',
+          'editorIndentGuide.background': '#6272A4',
+          'editorIndentGuide.activeBackground': '#F8F8F2',
         },
       })
-      monaco.editor.setTheme('cursor-dark')
+      monaco.editor.setTheme('obsidian-dark')
     }
-    
-    // Configure editor options with VS Code-like settings
+
     editor.updateOptions({
       fontSize: fontSize,
       fontFamily: "'Cascadia Code', 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace",
       fontLigatures: true,
-      minimap: { 
-        enabled: minimap,
-        side: 'right',
-        size: 'proportional',
-        showSlider: 'always',
-      },
+      minimap: { enabled: minimap },
       scrollBeyondLastLine: false,
       automaticLayout: true,
       tabSize: 2,
-      insertSpaces: true,
-      wordWrap: wordWrap ? 'on' : 'off',
-      lineNumbers: 'on',
-      lineNumbersMinChars: 3,
-      roundedSelection: false,
-      cursorStyle: 'line',
+      padding: { top: 16, bottom: 16 },
+      roundedSelection: true,
+      smoothScrolling: true,
       cursorBlinking: 'smooth',
       cursorSmoothCaretAnimation: 'on',
-      readOnly: readOnly,
-      contextmenu: !readOnly,
-      selectOnLineNumbers: true,
-      glyphMargin: true,
-      folding: true,
-      foldingStrategy: 'indentation',
-      showFoldingControls: 'always',
-      unfoldOnClickAfterEndOfLine: false,
-      lineDecorationsWidth: 10,
-      acceptSuggestionOnEnter: 'on',
-      quickSuggestions: {
-        other: true,
-        comments: false,
-        strings: false,
-      },
-      suggestOnTriggerCharacters: true,
-      suggestSelection: 'first',
-      tabCompletion: 'on',
-      wordBasedSuggestions: 'matchingDocuments',
-      scrollbar: {
-        vertical: 'auto',
-        horizontal: 'auto',
-        useShadows: true,
-        verticalScrollbarSize: 14,
-        horizontalScrollbarSize: 14,
-        arrowSize: 11,
-        alwaysConsumeMouseWheel: false,
-      },
-            renderWhitespace: 'none',
-            renderLineHighlight: 'all',
-            renderIndentGuides: true,
-            highlightActiveIndentGuide: true,
-            matchBrackets: 'always',
-      bracketPairColorization: {
-        enabled: true,
-      },
-      guides: {
-        bracketPairs: true,
-        indentation: true,
-        highlightActiveIndentation: true,
-      },
-      colorDecorators: true,
-      multiCursorModifier: 'ctrlCmd',
       formatOnPaste: true,
       formatOnType: true,
-      autoIndent: 'full',
-      detectIndentation: false,
-      trimAutoWhitespace: true,
-      dragAndDrop: true,
-      links: true,
-      colorDecoratorsLimit: 500,
-      overviewRulerBorder: false,
-      hideCursorInOverviewRuler: true,
-      overviewRulerLanes: 0,
-      smoothScrolling: true,
-      mouseWheelZoom: false,
-      disableLayerHinting: false,
-      disableMonospaceOptimizations: false,
     })
 
-    // Add keyboard shortcuts
+    // Keyboard shortcuts
     if (monaco) {
       try {
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-          const submitButton = document.querySelector('button[type="button"]')
-          if (submitButton && !submitButton.disabled) {
-            submitButton.click()
+          if (onRun && !isRunning && !isSubmitting) {
+            onRun()
           }
         })
       } catch (error) {
@@ -210,16 +159,6 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
     }
   }
 
-  const toggleTheme = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setTheme(prevTheme => prevTheme === 'vs-dark' ? 'vs' : 'vs-dark')
-  }
-
-  const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen)
-  }
-
   const languageMap = {
     javascript: 'javascript',
     python: 'python',
@@ -231,364 +170,145 @@ export default function CodeEditor({ language, value, onChange, theme: initialTh
     typescript: 'typescript',
   }
 
-  // Get file icon color based on language
-  const getFileIconColor = (lang) => {
-    const colors = {
-      javascript: '#F7DF1E',
-      python: '#3776AB',
-      cpp: '#00599C',
-      java: '#ED8B00',
-      go: '#00ADD8',
-      rust: '#000000',
-      csharp: '#239120',
-      typescript: '#3178C6',
-    }
-    return colors[lang] || '#8b949e'
-  }
-
-  // Get file extension
-  const getFileExtension = (lang) => {
-    const extensions = {
-      javascript: 'js',
-      python: 'py',
-      cpp: 'cpp',
-      java: 'java',
-      go: 'go',
-      rust: 'rs',
-      csharp: 'cs',
-      typescript: 'ts',
-    }
-    return extensions[lang] || 'js'
-  }
-
-  const isDark = theme === 'vs-dark'
-  // Calculate editor height accounting for title bar and status bar
-  const titleBarHeight = 60 // Approximate title bar height
-  const statusBarHeight = 28 // Approximate status bar height
-  const editorHeight = isFullscreen 
-    ? `calc(100vh - ${titleBarHeight + statusBarHeight}px)` 
-    : `calc(${height} - ${titleBarHeight + statusBarHeight}px)`
-
-  if (!isMounted) {
-    return (
-      <div style={{ height }} className={`flex items-center justify-center ${isDark ? 'bg-[#1a1a1a]' : 'bg-white'}`}>
-        <div className="text-center">
-          <Loader2 className={`h-8 w-8 animate-spin mx-auto mb-2 ${isDark ? 'text-[#58a6ff]' : 'text-primary-600'}`} />
-          <p className={isDark ? 'text-[#8b949e]' : 'text-gray-600'}>Initializing editor...</p>
-        </div>
-      </div>
-    )
-  }
+  if (!isMounted) return null
 
   return (
-    <div 
-      className={`w-full relative ${isDark ? 'bg-[#1a1a1a]' : 'bg-[#ffffff]'} ${isDark ? 'border-[#21262d]' : 'border-gray-200'} rounded-xl overflow-hidden shadow-2xl flex flex-col`}
+    <div
+      className={`flex flex-col w-full h-full bg-[#030712] border border-white/10 rounded-xl overflow-hidden shadow-2xl ${isFullscreen ? 'fixed inset-0 z-50 rounded-none' : ''}`}
       style={{ height: isFullscreen ? '100vh' : height }}
     >
-      {/* Cursor-like Title Bar - Minimal & Clean */}
-      <div 
-        className={`flex items-center justify-between px-4 sm:px-5 md:px-6 py-2.5 sm:py-3 ${isDark ? 'bg-[#161b22] border-b border-[#21262d]' : 'bg-[#f6f8fa] border-b border-gray-200'} cursor-default select-none flex-shrink-0`}
-        onDoubleClick={toggleFullscreen}
-        title="Double-click to toggle fullscreen"
-      >
-        <div className="flex items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
-          <div className="flex items-center space-x-2.5 min-w-0 group">
-            <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-md transition-all ${isDark ? 'bg-[#1a1a1a] hover:bg-[#21262d] text-[#c9d1d9]' : 'bg-white hover:bg-gray-50 text-gray-900'} cursor-pointer border ${isDark ? 'border-[#30363d]' : 'border-gray-200'}`}>
-              <FileCode className={`h-4 w-4 sm:h-4.5 sm:w-4.5 flex-shrink-0 ${isDark ? 'text-[#58a6ff]' : 'text-primary-600'}`} />
-              <span className={`text-sm sm:text-base font-medium truncate ${isDark ? 'text-[#c9d1d9]' : 'text-gray-900'}`}>
-                {fileName}.{languageMap[language] || 'js'}
-              </span>
+      {/* Premium Toolbar */}
+      <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-[#0B1121]">
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <div className="h-8 w-8 rounded-lg bg-primary-500/10 flex items-center justify-center border border-primary-500/20">
+              <FileCode className="h-4 w-4 text-primary-400" />
             </div>
-            <div className={`text-xs sm:text-sm px-2.5 py-1 rounded-md font-medium flex-shrink-0 ${isDark ? 'bg-[#21262d] text-[#8b949e] border border-[#30363d]' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>
-              <span className="hidden sm:inline">{languageMap[language]?.toUpperCase() || 'JAVASCRIPT'}</span>
-              <span className="sm:hidden">{languageMap[language]?.toUpperCase().slice(0, 3) || 'JS'}</span>
+            <div>
+              <p className="text-sm font-bold text-white leading-tight">{fileName}</p>
+              <p className="text-xs text-primary-400 font-mono uppercase tracking-wider">
+                {languageMap[language] || 'JS'}
+              </p>
             </div>
           </div>
         </div>
-        
-        <div className="flex items-center space-x-1 sm:space-x-1.5 flex-shrink-0">
-          {showThemeToggle && !readOnly && (
+
+        <div className="flex items-center space-x-2">
+          {/* Actions */}
+          <div className="flex items-center bg-black/20 rounded-lg p-1 border border-white/5 mr-2">
             <button
-              type="button"
-              onClick={toggleTheme}
-              className={`p-2 rounded-md transition-all ${isDark ? 'hover:bg-[#21262d] text-[#8b949e] hover:text-[#c9d1d9]' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-700'}`}
-              title={isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+              onClick={() => setShowSettings(!showSettings)}
+              className={`p-2 rounded-md transition-all ${showSettings ? 'bg-primary-500/20 text-primary-400' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+              title="Editor Settings"
             >
-              {isDark ? <Sun className="h-4 w-4 sm:h-4.5 sm:w-4.5" /> : <Moon className="h-4 w-4 sm:h-4.5 sm:w-4.5" />}
+              <Settings className="h-4 w-4" />
             </button>
-          )}
-          <button
-            type="button"
-            onClick={() => setShowSettings(!showSettings)}
-            className={`p-2 rounded-md transition-all ${isDark ? `hover:bg-[#21262d] ${showSettings ? 'bg-[#21262d] text-[#c9d1d9]' : 'text-[#8b949e]'} hover:text-[#c9d1d9]` : `hover:bg-gray-100 ${showSettings ? 'bg-gray-100 text-gray-700' : 'text-gray-500'} hover:text-gray-700`}`}
-            title="Editor Settings"
+            <button
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              className="p-2 rounded-md transition-all text-gray-400 hover:text-white hover:bg-white/5"
+              title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+            >
+              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </button>
+          </div>
+
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={onRun}
+            disabled={isRunning || isSubmitting}
+            className="hidden sm:flex"
           >
-            <Settings className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
-          </button>
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            className={`p-2 rounded-md transition-all ${isDark ? 'hover:bg-[#21262d] text-[#8b949e] hover:text-[#c9d1d9]' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-700'}`}
-            title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+            {isRunning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4 fill-current" />}
+            <span className="ml-2">Run</span>
+          </Button>
+
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={onSubmit}
+            disabled={isRunning || isSubmitting}
+            className="hidden sm:flex bg-green-600 hover:bg-green-700 text-white border-none"
           >
-            {isFullscreen ? <Minimize2 className="h-4 w-4 sm:h-4.5 sm:w-4.5" /> : <Maximize2 className="h-4 w-4 sm:h-4.5 sm:w-4.5" />}
-          </button>
+            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+            <span className="ml-2">Submit</span>
+          </Button>
         </div>
       </div>
 
-      {/* Settings Panel - Cursor Style */}
+      {/* Settings Panel Overlay */}
       {showSettings && (
-        <div className={`absolute top-11 sm:top-12 right-2 sm:right-3 z-30 ${isDark ? 'bg-[#161b22] border-[#30363d]' : 'bg-white border-gray-200'} border rounded-lg shadow-2xl p-4 min-w-[220px] sm:min-w-[240px] md:min-w-[260px]`}>
-          <div className={`flex items-center justify-between mb-4 pb-3 border-b ${isDark ? 'border-[#21262d]' : 'border-gray-200'}`}>
-            <h3 className={`text-sm font-semibold ${isDark ? 'text-[#c9d1d9]' : 'text-gray-900'}`}>Editor Settings</h3>
-            <button
-              onClick={() => setShowSettings(false)}
-              className={`p-1.5 rounded-md transition-all ${isDark ? 'hover:bg-[#21262d] text-[#8b949e] hover:text-[#c9d1d9]' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-700'}`}
-            >
+        <div className="absolute top-14 right-4 z-30 w-64 bg-[#111827] border border-white/10 rounded-xl shadow-2xl p-4 animate-in slide-in-from-top-2">
+          <div className="flex items-center justify-between mb-4 pb-2 border-b border-white/10">
+            <h3 className="text-sm font-semibold text-white">Editor Settings</h3>
+            <button onClick={() => setShowSettings(false)} className="text-gray-400 hover:text-white">
               <X className="h-4 w-4" />
             </button>
           </div>
-          <div className="space-y-5">
+          <div className="space-y-4">
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <label className={`text-sm font-medium ${isDark ? 'text-[#c9d1d9]' : 'text-gray-900'}`}>
-                  Font Size
-                </label>
-                <span className={`text-sm font-mono ${isDark ? 'text-[#8b949e]' : 'text-gray-500'}`}>{fontSize}px</span>
-              </div>
+              <label className="text-xs text-gray-400 mb-1 block">Font Size: {fontSize}px</label>
               <input
                 type="range"
-                min="10"
+                min="12"
                 max="24"
                 value={fontSize}
                 onChange={(e) => setFontSize(Number(e.target.value))}
-                className={`w-full h-2 rounded-lg appearance-none cursor-pointer ${isDark ? 'bg-[#21262d] accent-[#58a6ff]' : 'bg-gray-200 accent-primary-600'}`}
+                className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary-500"
               />
             </div>
             <div className="flex items-center justify-between">
-              <label className={`text-sm font-medium ${isDark ? 'text-[#c9d1d9]' : 'text-gray-900'}`}>
-                Word Wrap
-              </label>
+              <label className="text-sm text-gray-300">Word Wrap</label>
               <button
-                type="button"
                 onClick={() => setWordWrap(!wordWrap)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  wordWrap ? (isDark ? 'bg-[#238636]' : 'bg-primary-600') : (isDark ? 'bg-[#21262d]' : 'bg-gray-300')
-                }`}
+                className={`w-10 h-5 rounded-full transition-colors relative ${wordWrap ? 'bg-primary-600' : 'bg-gray-700'}`}
               >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-md ${
-                    wordWrap ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
+                <span className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${wordWrap ? 'translate-x-5' : ''}`} />
               </button>
             </div>
             <div className="flex items-center justify-between">
-              <label className={`text-sm font-medium ${isDark ? 'text-[#c9d1d9]' : 'text-gray-900'}`}>
-                Minimap
-              </label>
+              <label className="text-sm text-gray-300">Minimap</label>
               <button
-                type="button"
                 onClick={() => setMinimap(!minimap)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  minimap ? (isDark ? 'bg-[#238636]' : 'bg-primary-600') : (isDark ? 'bg-[#21262d]' : 'bg-gray-300')
-                }`}
+                className={`w-10 h-5 rounded-full transition-colors relative ${minimap ? 'bg-primary-600' : 'bg-gray-700'}`}
               >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-md ${
-                    minimap ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
+                <span className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${minimap ? 'translate-x-5' : ''}`} />
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Main Content Area - Sidebar + Editor */}
-      <div className="flex flex-1 overflow-hidden" style={{ height: editorHeight, minHeight: '250px' }}>
-        {/* File Explorer Sidebar */}
-        {sidebarExpanded && (
-          <div 
-            className={`flex-shrink-0 border-r ${isDark ? 'bg-[#161b22] border-[#21262d]' : 'bg-[#f6f8fa] border-gray-200'}`}
-            style={{ width: `${sidebarWidth}px` }}
-          >
-            <div className={`px-3 py-2 border-b ${isDark ? 'border-[#21262d]' : 'border-gray-200'}`}>
-              <div className="flex items-center justify-between">
-                <span className={`text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-[#8b949e]' : 'text-gray-600'}`}>
-                  Explorer
-                </span>
-                <button
-                  onClick={() => setSidebarExpanded(false)}
-                  className={`p-1 rounded transition-colors ${isDark ? 'hover:bg-[#21262d]' : 'hover:bg-gray-200'}`}
-                  title="Hide Sidebar"
-                >
-                  <ChevronRight className={`h-4 w-4 ${isDark ? 'text-[#8b949e]' : 'text-gray-600'}`} />
-                </button>
-              </div>
-            </div>
-            <div className="py-2 overflow-y-auto" style={{ height: `calc(${editorHeight} - 40px)` }}>
-              {/* File Tree */}
-              <div className="px-2">
-                <div className={`flex items-center space-x-1.5 px-2 py-1.5 rounded-md cursor-pointer transition-colors ${isDark ? 'hover:bg-[#21262d]' : 'hover:bg-gray-100'}`}>
-                  <ChevronDown className={`h-3.5 w-3.5 ${isDark ? 'text-[#8b949e]' : 'text-gray-600'}`} />
-                  <Folder className={`h-4 w-4 ${isDark ? 'text-[#58a6ff]' : 'text-primary-600'}`} />
-                  <span className={`text-sm font-medium ${isDark ? 'text-[#c9d1d9]' : 'text-gray-900'}`}>
-                    {fileName || 'Challenge'}
-                  </span>
-                </div>
-                <div className="ml-6 mt-1">
-                  <div className={`flex items-center space-x-2 px-2 py-1.5 rounded-md cursor-pointer ${isDark ? 'bg-[#1f6feb] bg-opacity-20' : 'bg-blue-50'} border-l-2 ${isDark ? 'border-[#1f6feb]' : 'border-primary-600'} transition-colors`}>
-                    <div 
-                      className="w-4 h-4 rounded flex items-center justify-center font-bold text-xs"
-                      style={{ 
-                        backgroundColor: getFileIconColor(language),
-                        color: language === 'rust' ? '#fff' : '#000'
-                      }}
-                    >
-                      {languageMap[language]?.charAt(0).toUpperCase() || 'J'}
-                    </div>
-                    <span className={`text-sm ${isDark ? 'text-[#c9d1d9]' : 'text-gray-900'}`}>
-                      {fileName || 'solution'}.{getFileExtension(language)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Sidebar Toggle Button (when collapsed) */}
-        {!sidebarExpanded && (
-          <button
-            onClick={() => setSidebarExpanded(true)}
-            className={`flex-shrink-0 w-6 border-r ${isDark ? 'bg-[#161b22] border-[#21262d] hover:bg-[#21262d]' : 'bg-[#f6f8fa] border-gray-200 hover:bg-gray-100'} transition-colors flex items-center justify-center`}
-            title="Show Sidebar"
-          >
-            <ChevronRight className={`h-4 w-4 ${isDark ? 'text-[#8b949e]' : 'text-gray-600'}`} />
-          </button>
-        )}
-
-        {/* Editor Container - Cursor Style */}
-        <div className={`flex-1 relative ${isDark ? 'bg-[#1a1a1a]' : 'bg-[#ffffff]'} overflow-hidden`}>
-          <MonacoEditor
+      {/* Editor Area */}
+      <div className="flex-1 relative bg-[#030712]">
+        <MonacoEditor
           height="100%"
           language={languageMap[language] || 'javascript'}
           value={value ?? ''}
           onChange={handleChange}
-          theme={theme}
+          theme="obsidian-dark" // Forces our custom theme
           onMount={handleEditorDidMount}
           loading={
-            <div className={`flex items-center justify-center h-full ${isDark ? 'bg-[#1a1a1a]' : 'bg-[#ffffff]'}`}>
-              <div className="text-center">
-                <Loader2 className={`h-8 w-8 animate-spin mx-auto mb-2 ${isDark ? 'text-[#58a6ff]' : 'text-primary-600'}`} />
-                <p className={isDark ? 'text-[#8b949e]' : 'text-gray-600'}>Loading editor...</p>
-              </div>
+            <div className="flex items-center justify-center h-full bg-[#030712]">
+              <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
             </div>
           }
           options={{
-            fontSize: fontSize,
-            fontFamily: "'Cascadia Code', 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace",
-            fontLigatures: true,
-            minimap: { 
-              enabled: minimap,
-              side: 'right',
-              size: 'proportional',
-              showSlider: 'always',
-            },
-            scrollBeyondLastLine: false,
-            automaticLayout: true,
-            tabSize: 2,
-            insertSpaces: true,
-            wordWrap: wordWrap ? 'on' : 'off',
-            lineNumbers: 'on',
-            lineNumbersMinChars: 3,
-            roundedSelection: false,
-            cursorStyle: 'line',
-            cursorBlinking: 'smooth',
-            cursorSmoothCaretAnimation: 'on',
-            readOnly: readOnly,
-            contextmenu: !readOnly,
-            selectOnLineNumbers: true,
-            glyphMargin: true,
-            folding: true,
-            foldingStrategy: 'indentation',
-            showFoldingControls: 'always',
-            unfoldOnClickAfterEndOfLine: false,
-            lineDecorationsWidth: 10,
-            acceptSuggestionOnEnter: 'on',
-            quickSuggestions: {
-              other: true,
-              comments: false,
-              strings: false,
-            },
-            suggestOnTriggerCharacters: true,
-            suggestSelection: 'first',
-            tabCompletion: 'on',
-            wordBasedSuggestions: 'matchingDocuments',
-            scrollbar: {
-              vertical: 'auto',
-              horizontal: 'auto',
-              useShadows: true,
-              verticalScrollbarSize: 14,
-              horizontalScrollbarSize: 14,
-              arrowSize: 11,
-              alwaysConsumeMouseWheel: false,
-            },
-            renderWhitespace: 'none',
-            renderLineHighlight: 'all',
-            renderIndentGuides: true,
-            highlightActiveIndentGuide: true,
-            matchBrackets: 'always',
-            bracketPairColorization: {
-              enabled: true,
-            },
-            guides: {
-              bracketPairs: true,
-              indentation: true,
-              highlightActiveIndentation: true,
-            },
-            colorDecorators: true,
-            multiCursorModifier: 'ctrlCmd',
-            formatOnPaste: true,
-            formatOnType: true,
-            autoIndent: 'full',
-            detectIndentation: false,
-            trimAutoWhitespace: true,
-            dragAndDrop: true,
-            links: true,
-            colorDecoratorsLimit: 500,
-            overviewRulerBorder: false,
-            hideCursorInOverviewRuler: true,
-            overviewRulerLanes: 0,
-            smoothScrolling: true,
-            mouseWheelZoom: false,
-            disableLayerHinting: false,
-            disableMonospaceOptimizations: false,
+            // Options are updated in handleEditorDidMount and useEffect
+            minimap: { enabled: minimap }
           }}
         />
-        </div>
       </div>
 
-      {/* Cursor-like Status Bar - Minimal & Clean */}
-      <div className={`flex items-center justify-between px-4 sm:px-5 md:px-6 py-2 text-xs flex-shrink-0 ${isDark ? 'bg-[#161b22] text-[#8b949e] border-t border-[#21262d]' : 'bg-[#f6f8fa] text-gray-600 border-t border-gray-200'}`}>
-        <div className="flex items-center space-x-4 sm:space-x-5 min-w-0">
-          <div className="flex items-center space-x-2">
-            <Circle className={`h-2 w-2 fill-current flex-shrink-0 ${isDark ? 'text-[#238636]' : 'text-green-600'}`} />
-            <span className={`font-medium truncate ${isDark ? 'text-[#c9d1d9]' : 'text-gray-900'}`}>{languageMap[language]?.toUpperCase() || 'JAVASCRIPT'}</span>
-          </div>
-          <span className="hidden sm:inline">Spaces: 2</span>
-          <span className="hidden md:inline">UTF-8</span>
-          <span className="hidden lg:inline">LF</span>
+      {/* Status Bar */}
+      <div className="flex items-center justify-between px-4 py-1.5 bg-[#0B1121] border-t border-white/10 text-xs text-gray-500 font-mono">
+        <div className="flex items-center space-x-3">
+          <span>Ln {value ? value.split('\n').length : 1}</span>
+          <span>Col {1}</span>
+          <span>UTF-8</span>
         </div>
-        <div className="flex items-center space-x-4 sm:space-x-5 flex-shrink-0">
-          {value && (
-            <>
-              <span className="hidden sm:inline">{value.split('\n').length} lines</span>
-              <span className="hidden md:inline">Ln {value.split('\n').length}, Col {value.split('\n').pop().length + 1}</span>
-            </>
-          )}
-          <span className={isDark ? 'text-[#c9d1d9]' : 'text-gray-900'}>{value ? value.length : 0} chars</span>
+        <div>
+          {value ? value.length : 0} chars
         </div>
       </div>
     </div>
