@@ -127,7 +127,77 @@ export default function ChallengePage() {
     }
   }, [user, authLoading, router, language, slugOrNumber, fetchChallenge, fetchParticipants, fetchLeaderboard])
 
-  // ... (existing handlers: handleRun, handleSubmit)
+  const handleRun = async () => {
+    if (!code.trim()) return
+    setIsRunning(true)
+    setOutput('Running code...')
+    setError('')
+    setSubmissionResult(null)
+
+    try {
+      const response = await fetch(`/api/challenges/${language}/${slugOrNumber}/run`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, language }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setOutput(data.output || 'No output')
+        if (data.error) setError(data.error)
+      } else {
+        setError(data.error || 'Execution failed')
+        setOutput('')
+      }
+    } catch (err) {
+      console.error('Run error:', err)
+      setError('Failed to run code due to network error')
+    } finally {
+      setIsRunning(false)
+    }
+  }
+
+  const handleSubmit = async () => {
+    if (!code.trim()) return
+    setIsSubmitting(true)
+    setSubmissionResult(null)
+    // Clear terminal output/error when submitting to focus on test results
+    setOutput('')
+    setError('')
+
+    try {
+      const response = await fetch(`/api/challenges/${language}/${slugOrNumber}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, language }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSubmissionResult(data)
+        if (data.apiError) {
+          setError(data.apiError)
+        }
+
+        // Refresh leaderboard on successful submission
+        if (data.status === 'success' || data.passed) {
+          fetchLeaderboard()
+          toast.success('Solution submitted!')
+        }
+      } else {
+        setError(data.error || 'Submission failed')
+        toast.error(data.error || 'Submission failed')
+      }
+    } catch (err) {
+      console.error('Submit error:', err)
+      setError('Failed to submit code due to network error')
+      toast.error('Network error during submission')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   // Loading States
   if (authLoading || loading) {
