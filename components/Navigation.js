@@ -96,9 +96,9 @@ export default function Navigation() {
                   className="flex items-center space-x-2 hover:opacity-80 transition-opacity focus:outline-none"
                 >
                   <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary-600 to-secondary-600 flex items-center justify-center text-white font-semibold shadow-inner border border-white/20">
-                    {user.name.charAt(0).toUpperCase()}
+                    {user?.name?.charAt(0)?.toUpperCase() || '?'}
                   </div>
-                  <span className="text-gray-200 font-medium hidden lg:block">{user.name}</span>
+                  <span className="text-gray-200 font-medium hidden lg:block">{user?.name || 'User'}</span>
                   <ChevronDown className={`h-4 w-4 text-gray-500 hidden lg:block transition-transform ${profileMenuOpen ? 'rotate-180' : ''}`} />
                 </button>
 
@@ -111,8 +111,8 @@ export default function Navigation() {
                       className="absolute right-0 mt-2 w-56 bg-[#111827] rounded-xl shadow-2xl border border-white/10 py-2 z-50"
                     >
                       <div className="px-4 py-3 border-b border-white/10">
-                        <p className="text-sm font-semibold text-white">{user.name}</p>
-                        <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                        <p className="text-sm font-semibold text-white">{user?.name || 'User'}</p>
+                        <p className="text-xs text-gray-500 truncate">{user?.email || ''}</p>
                       </div>
                       <Link
                         href="/dashboard"

@@ -93,33 +93,37 @@ export default function CodeEditor({
 
     // Define Obsidian/Premium Dark Theme
     if (monaco) {
-      monaco.editor.defineTheme('obsidian-dark', {
-        base: 'vs-dark',
-        inherit: true,
-        rules: [
-          { token: 'comment', foreground: '6272A4', fontStyle: 'italic' },
-          { token: 'keyword', foreground: 'FF79C6', fontStyle: 'bold' },
-          { token: 'string', foreground: 'F1FA8C' },
-          { token: 'number', foreground: 'BD93F9' },
-          { token: 'type', foreground: '8BE9FD' },
-          { token: 'function', foreground: '50FA7B' },
-          { token: 'variable', foreground: 'F8F8F2' },
-          { token: 'constant', foreground: 'BD93F9' },
-        ],
-        colors: {
-          'editor.background': '#030712', // Matches tailwind background
-          'editor.foreground': '#F8F8F2',
-          'editorLineNumber.foreground': '#6272A4',
-          'editorLineNumber.activeForeground': '#F8F8F2',
-          'editor.selectionBackground': '#44475A',
-          'editor.lineHighlightBackground': '#44475A22',
-          'editorCursor.foreground': '#F8F8F2',
-          'editorWhitespace.foreground': '#6272A4',
-          'editorIndentGuide.background': '#6272A4',
-          'editorIndentGuide.activeBackground': '#F8F8F2',
-        },
-      })
-      monaco.editor.setTheme('obsidian-dark')
+      try {
+        monaco.editor.defineTheme('obsidian-dark', {
+          base: 'vs-dark',
+          inherit: true,
+          rules: [
+            { token: 'comment', foreground: '6272A4', fontStyle: 'italic' },
+            { token: 'keyword', foreground: 'FF79C6', fontStyle: 'bold' },
+            { token: 'string', foreground: 'F1FA8C' },
+            { token: 'number', foreground: 'BD93F9' },
+            { token: 'type', foreground: '8BE9FD' },
+            { token: 'function', foreground: '50FA7B' },
+            { token: 'variable', foreground: 'F8F8F2' },
+            { token: 'constant', foreground: 'BD93F9' },
+          ],
+          colors: {
+            'editor.background': '#030712',
+            'editor.foreground': '#F8F8F2',
+            'editorLineNumber.foreground': '#6272A4',
+            'editorLineNumber.activeForeground': '#F8F8F2',
+            'editor.selectionBackground': '#44475A',
+            'editor.lineHighlightBackground': '#44475A22',
+            'editorCursor.foreground': '#F8F8F2',
+            'editorWhitespace.foreground': '#6272A4',
+            'editorIndentGuide.background': '#6272A4',
+            'editorIndentGuide.activeBackground': '#F8F8F2',
+          },
+        })
+        monaco.editor.setTheme('obsidian-dark')
+      } catch (e) {
+        console.warn('Failed to define theme:', e)
+      }
     }
 
     editor.updateOptions({

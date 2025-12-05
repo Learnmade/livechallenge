@@ -5,10 +5,8 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useRouter, useParams } from 'next/navigation'
 import CodeEditor from '@/components/CodeEditor'
 import Terminal from '@/components/Terminal'
-import LiveParticipants from '@/components/LiveParticipants'
-import ChallengeLeaderboard from '@/components/ChallengeLeaderboard'
 import ProblemDisplay from '@/components/ProblemDisplay'
-import { Play, CheckCircle, ArrowLeft, Users, Trophy, Clock, Zap } from 'lucide-react'
+import { ArrowLeft, Users, Clock, Zap } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Link from 'next/link'
 import Badge from '@/components/ui/Badge'
@@ -206,7 +204,7 @@ export default function ChallengePage() {
             <Users className="h-3 w-3" /> {participants.length} Online
           </Badge>
           <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-primary-500 to-secondary-500 flex items-center justify-center font-bold text-xs ring-2 ring-white/10">
-            {user?.username?.[0]?.toUpperCase()}
+            {user?.name?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || '?'}
           </div>
         </div>
       </header>
