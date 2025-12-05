@@ -9,7 +9,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import dynamic from 'next/dynamic'
 
 // Optimize font loading
-const inter = Inter({ 
+const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
   preload: true,
@@ -24,14 +24,14 @@ export default function RootLayout({ children }) {
         <meta name="description" content="Real-time competitive coding battles for live streams" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#0284c7" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/logo.jpg" />
       </head>
       <body className={`${inter.className} bg-gray-50`}>
         <ErrorBoundary>
           <AuthProvider>
             <BattleProvider>
               {children}
-              <Toaster 
+              <Toaster
                 position="top-right"
                 toastOptions={{
                   duration: 3000,

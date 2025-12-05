@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { Code, Menu, X, Trophy, LayoutDashboard, History, Shield, LogOut, User, ChevronDown } from 'lucide-react'
 import Button from './ui/Button'
 import { motion, AnimatePresence } from 'framer-motion'
+import Image from 'next/image'
 
 export default function Navigation() {
   const { user, logout } = useAuth()
@@ -50,8 +51,13 @@ export default function Navigation() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 group">
-            <div className="bg-gradient-to-br from-primary-600 to-secondary-600 p-2 rounded-lg group-hover:scale-110 transition-transform shadow-lg shadow-primary-500/20">
-              <Code className="h-6 w-6 text-white" />
+            <div className="relative h-10 w-10 overflow-hidden rounded-lg group-hover:scale-110 transition-transform shadow-lg shadow-primary-500/20">
+              <Image
+                src="/logo.jpg"
+                alt="LearnMade Logo"
+                fill
+                className="object-cover"
+              />
             </div>
             <span className="text-xl font-bold text-white hidden sm:block tracking-tight">
               Learn<span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-secondary-400">Made</span>
