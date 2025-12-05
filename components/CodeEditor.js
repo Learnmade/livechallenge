@@ -128,8 +128,7 @@ export default function CodeEditor({
     // Safety check: Ensure theme is defined before setting it
     if (monaco) {
       try {
-        // Redefine theme just in case beforeMount didn't fire or failed
-        monaco.editor.defineTheme('obsidian-dark', {
+        const themeData = {
           base: 'vs-dark',
           inherit: true,
           rules: [
@@ -141,20 +140,40 @@ export default function CodeEditor({
             { token: 'function', foreground: '50FA7B' },
             { token: 'variable', foreground: 'F8F8F2' },
             { token: 'constant', foreground: 'BD93F9' },
+            { token: 'class', foreground: '8BE9FD' },
+            { token: 'interface', foreground: '8BE9FD' },
+            { token: 'namespace', foreground: '8BE9FD' },
+            { token: 'parameter', foreground: 'FFB86C' },
+            { token: 'property', foreground: '8BE9FD' },
+            { token: 'enum', foreground: '8BE9FD' },
           ],
           colors: {
             'editor.background': '#030712',
             'editor.foreground': '#F8F8F2',
-            'editorLineNumber.foreground': '#6272A4',
+            'editorLineNumber.foreground': '#4B5563',
             'editorLineNumber.activeForeground': '#F8F8F2',
-            'editor.selectionBackground': '#44475A',
-            'editor.lineHighlightBackground': '#44475A22',
-            'editorCursor.foreground': '#F8F8F2',
-            'editorWhitespace.foreground': '#6272A4',
-            'editorIndentGuide.background': '#6272A4',
-            'editorIndentGuide.activeBackground': '#F8F8F2',
+            'editor.selectionBackground': '#1E293B',
+            'editor.inactiveSelectionBackground': '#1E293B80',
+            'editor.lineHighlightBackground': '#1F293750',
+            'editorCursor.foreground': '#38BDF8',
+            'editorWhitespace.foreground': '#374151',
+            'editorIndentGuide.background': '#1F2937',
+            'editorIndentGuide.activeBackground': '#374151',
+            // Widget styling (Fixes white artifacts)
+            'editorWidget.background': '#0F172A',
+            'editorWidget.border': '#1E293B',
+            'editorSuggestWidget.background': '#0F172A',
+            'editorSuggestWidget.border': '#1E293B',
+            'editorSuggestWidget.selectedBackground': '#1E293B',
+            'editorHoverWidget.background': '#0F172A',
+            'editorHoverWidget.border': '#1E293B',
+            // Scrollbar (Subtle)
+            'scrollbarSlider.background': '#33415550',
+            'scrollbarSlider.hoverBackground': '#334155',
+            'scrollbarSlider.activeBackground': '#475569',
           },
-        })
+        }
+        monaco.editor.defineTheme('obsidian-dark', themeData)
         monaco.editor.setTheme('obsidian-dark')
       } catch (e) {
         console.warn('Failed to set theme, falling back to vs-dark:', e)
@@ -164,19 +183,25 @@ export default function CodeEditor({
 
     editor.updateOptions({
       fontSize: fontSize,
-      fontFamily: "'Cascadia Code', 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace",
+      fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace",
       fontLigatures: true,
       minimap: { enabled: minimap },
       scrollBeyondLastLine: false,
       automaticLayout: true,
       tabSize: 2,
-      padding: { top: 16, bottom: 16 },
+      lineHeight: 24, // Improved readability
+      letterSpacing: 0.5,
+      padding: { top: 24, bottom: 24 },
       roundedSelection: true,
       smoothScrolling: true,
       cursorBlinking: 'smooth',
       cursorSmoothCaretAnimation: 'on',
       formatOnPaste: true,
       formatOnType: true,
+      renderLineHighlight: 'all',
+      stickyScroll: { enabled: false }, // Disable sticky scroll to prevent layout issues
+      overviewRulerBorder: false,
+      hideCursorInOverviewRuler: true,
     })
 
     // Keyboard shortcuts
